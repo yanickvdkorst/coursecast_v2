@@ -30,7 +30,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         .select('theme')
         .eq('id', user.id)
         .single()
-      if (profile?.theme) initialTheme = profile.theme
+      if (profile?.theme === 'dark' || profile?.theme === 'light') initialTheme = profile.theme
     }
   } catch {
     // Not authenticated — use default dark
