@@ -27,7 +27,6 @@ export default async function CompetitionDetailPage({ params }: Props) {
     .from('competition_players')
     .select('*')
     .eq('competition_id', id)
-    .order('points', { ascending: false })
   const standings = (cpData ?? []) as CompetitionPlayer[]
 
   const playerIds = standings.map(s => s.player_id)
@@ -40,76 +39,108 @@ export default async function CompetitionDetailPage({ params }: Props) {
     profiles = (data ?? []) as Profile[]
   }
 
-  // Fetch matches in this competition (requires migration 008 for full visibility)
+  // Fetch recent matches in this competition
   const { data: matchesData } = await supabase
     .from('matches')
     .select('*')
     .eq('competition_id', id)
     .order('created_at', { ascending: false })
-    .limit(20)
+    .limit(30)
   const matches = (matchesData ?? []) as Array<Record<string, unknown>>
 
   const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
-  const isCreator = c.created_by === user.id
 
-  const fmt = (d: string | null) =>
-    d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) : null
+  // Sort standings by wins desc
+  const sorted = [...standings].sort((a, b) => b.wins - a.wins || a.losses - b.losses)
 
-  // Active match IDs between current user and each opponent (to show "bezig" state)
-  const activeOpponents = new Set(
-    matches
-      .filter(m => m.status === 'active' && (m.player_a_id === user.id || m.player_b_id === user.id))
-      .map(m => (m.player_a_id === user.id ? m.player_b_id : m.player_a_id) as string)
-  )
+  // Active match IDs between current user and each opponent
+  const activeMatchByOpponent: Record<string, string> = {}
+  for (const m of matches) {
+    if (m.status === 'active') {
+      if (m.player_a_id === user.id) activeMatchByOpponent[m.player_b_id as string] = m.id as string
+      else if (m.player_b_id === user.id) activeMatchByOpponent[m.player_a_id as string] = m.id as string
+    }
+  }
+
+  const isTwoPlayer = playerIds.length === 2
+  const myStats = standings.find(s => s.player_id === user.id)
+  const opponentStats = isTwoPlayer ? standings.find(s => s.player_id !== user.id) : null
+  const opponentProfile = opponentStats ? profileMap[opponentStats.player_id] : null
 
   return (
     <div className="px-4 pt-8 pb-24 max-w-lg mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-6">
         <Link href="/competitions" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }}>
           ←
         </Link>
         <h1 className="text-2xl font-bold flex-1" style={{ color: 'var(--text-primary)' }}>
           {c.name}
         </h1>
-        <span
-          className="text-xs px-2 py-1 rounded-full font-medium"
-          style={{ background: 'var(--bg-card)', color: 'var(--color-gold-500)', border: '1px solid var(--color-gold-500)' }}
-        >
-          {c.status}
-        </span>
       </div>
 
-      <p className="text-sm mb-8 ml-9" style={{ color: 'var(--text-muted)' }}>
-        {c.format === 'matchplay_points' ? '2-1-0 punten' : 'Alleen winst'}
-        {fmt(c.ends_at) && ` · t/m ${fmt(c.ends_at)}`}
-      </p>
+      {/* Head-to-head score (2 players) */}
+      {isTwoPlayer && myStats && opponentStats && opponentProfile && (
+        <div
+          className="rounded-2xl border p-6 mb-8 text-center"
+          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
+        >
+          <div className="flex items-center justify-center gap-6">
+            <div className="flex-1">
+              <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Jij</p>
+              <p className="text-5xl font-black" style={{ color: 'var(--color-gold-500)' }}>{myStats.wins}</p>
+            </div>
+            <div style={{ color: 'var(--text-muted)' }}>
+              <p className="text-2xl font-light">–</p>
+              {myStats.draws > 0 && (
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{myStats.draws}G</p>
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+                {opponentProfile.full_name?.split(' ')[0] || opponentProfile.username}
+              </p>
+              <p className="text-5xl font-black" style={{ color: 'var(--text-primary)' }}>{opponentStats.wins}</p>
+            </div>
+          </div>
+          <p className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
+            {myStats.wins + opponentStats.wins + myStats.draws} {myStats.wins + opponentStats.wins + myStats.draws === 1 ? 'wedstrijd' : 'wedstrijden'} gespeeld
+          </p>
 
-      {/* Leaderboard */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-            Klassement
-          </h2>
-          {isCreator && (
+          {/* Play button */}
+          {activeMatchByOpponent[opponentStats.player_id] ? (
             <Link
-              href={`/competitions/${id}/add-player`}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-              style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+              href={`/matches/${activeMatchByOpponent[opponentStats.player_id]}`}
+              className="mt-5 inline-block px-6 py-3 rounded-xl font-semibold text-sm"
+              style={{ background: '#4ade8020', color: '#4ade80', border: '1px solid #4ade8060' }}
             >
-              + Speler
+              Wedstrijd bezig → ga verder
             </Link>
+          ) : (
+            <form action={startCompetitionMatch.bind(null, id, opponentStats.player_id)} className="mt-5">
+              <button
+                type="submit"
+                className="px-6 py-3 rounded-xl font-semibold text-sm"
+                style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+              >
+                Nieuw duel spelen
+              </button>
+            </form>
           )}
         </div>
+      )}
 
-        {standings.length === 0 ? (
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nog geen spelers.</p>
-        ) : (
+      {/* Multi-player: simple wins leaderboard */}
+      {!isTwoPlayer && sorted.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
+            Stand
+          </h2>
           <div className="space-y-2">
-            {standings.map((s, i) => {
+            {sorted.map((s, i) => {
               const p = profileMap[s.player_id]
               const isMe = s.player_id === user.id
-              const hasActiveMatch = activeOpponents.has(s.player_id)
+              const activeMatchId = activeMatchByOpponent[s.player_id]
 
               return (
                 <div
@@ -120,28 +151,25 @@ export default async function CompetitionDetailPage({ params }: Props) {
                     background: isMe ? 'var(--color-navy-800)' : 'var(--bg-card)',
                   }}
                 >
-                  {/* Rank */}
                   <span className="text-sm font-bold w-5 shrink-0" style={{ color: i === 0 ? 'var(--color-gold-500)' : 'var(--text-muted)' }}>
                     {i + 1}
                   </span>
-
-                  {/* Name + stats */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                       {p?.full_name || p?.username || '—'}
                       {isMe && <span className="ml-1 text-xs" style={{ color: 'var(--color-gold-500)' }}>(jij)</span>}
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                      <span className="font-bold" style={{ color: 'var(--color-gold-500)' }}>{s.points} pts</span>
-                      <span className="ml-2">{s.wins}W · {s.draws}G · {s.losses}V</span>
+                      <span className="font-bold" style={{ color: 'var(--color-gold-500)' }}>{s.wins}W</span>
+                      {s.draws > 0 && <span className="ml-1">{s.draws}G</span>}
+                      <span className="ml-1">{s.losses}V</span>
+                      <span className="ml-1.5" style={{ color: 'var(--text-muted)' }}>· {s.wins + s.losses + s.draws} gespeeld</span>
                     </p>
                   </div>
-
-                  {/* Play button (not shown for yourself) */}
                   {!isMe && (
-                    hasActiveMatch ? (
+                    activeMatchId ? (
                       <Link
-                        href={`/matches/${matches.find(m => m.status === 'active' && ((m.player_a_id === user.id && m.player_b_id === s.player_id) || (m.player_b_id === user.id && m.player_a_id === s.player_id)))?.id}`}
+                        href={`/matches/${activeMatchId}`}
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
                         style={{ background: '#4ade8020', color: '#4ade80', border: '1px solid #4ade8060' }}
                       >
@@ -163,14 +191,14 @@ export default async function CompetitionDetailPage({ params }: Props) {
               )
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* Recent matches */}
+      {/* Match history */}
       {matches.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
-            Wedstrijden
+            Geschiedenis
           </h2>
           <div className="space-y-2">
             {matches.map(m => {
@@ -179,7 +207,17 @@ export default async function CompetitionDetailPage({ params }: Props) {
               const nameA = pA ? (pA.full_name || pA.username).split(' ')[0] : '?'
               const nameB = pB ? (pB.full_name || pB.username).split(' ')[0] : '?'
               const isMyMatch = m.player_a_id === user.id || m.player_b_id === user.id
-              const statusColor = m.status === 'complete' ? 'var(--color-gold-500)' : m.status === 'active' ? '#4ade80' : 'var(--text-muted)'
+
+              const statusLabel =
+                m.status === 'complete'
+                  ? m.result_summary ? String(m.result_summary) : 'Gespeeld'
+                  : m.status === 'active'
+                  ? 'Bezig'
+                  : 'Gepland'
+              const statusColor =
+                m.status === 'complete' ? 'var(--color-gold-500)'
+                  : m.status === 'active' ? '#4ade80'
+                  : 'var(--text-muted)'
 
               return (
                 <Link
@@ -195,13 +233,7 @@ export default async function CompetitionDetailPage({ params }: Props) {
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       {nameA} vs {nameB}
                     </p>
-                    <p className="text-xs mt-0.5" style={{ color: statusColor }}>
-                      {m.status === 'complete'
-                        ? m.result_summary ? String(m.result_summary) : 'Gespeeld'
-                        : m.status === 'active'
-                        ? 'Bezig'
-                        : 'Gepland'}
-                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: statusColor }}>{statusLabel}</p>
                   </div>
                   <span style={{ color: 'var(--color-gold-500)' }}>→</span>
                 </Link>

@@ -14,8 +14,6 @@ interface Props {
 export function NewCompetitionForm({ friends, currentUserId }: Props) {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [format, setFormat] = useState<'matchplay_points' | 'winsonly'>('matchplay_points')
-  const [endDate, setEndDate] = useState('')
   const [selectedFriends, setSelectedFriends] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +24,7 @@ export function NewCompetitionForm({ friends, currentUserId }: Props) {
     )
 
   const handleCreate = async () => {
-    if (!name.trim()) return
+    if (!name.trim() || selectedFriends.length === 0) return
     setLoading(true)
     setError(null)
 
@@ -36,10 +34,10 @@ export function NewCompetitionForm({ friends, currentUserId }: Props) {
       .from('competitions')
       .insert({
         name: name.trim(),
-        format,
+        format: 'winsonly',
         status: 'active',
         created_by: currentUserId,
-        ends_at: endDate ? new Date(endDate).toISOString() : null,
+        ends_at: null,
       })
       .select('id')
       .single()
@@ -66,7 +64,6 @@ export function NewCompetitionForm({ friends, currentUserId }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Name */}
       <div>
         <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Naam *</label>
         <input
@@ -75,52 +72,17 @@ export function NewCompetitionForm({ friends, currentUserId }: Props) {
           onChange={e => setName(e.target.value)}
           className={inputClass}
           style={inputStyle}
-          placeholder="Clubkampioenschap 2025"
+          placeholder="bijv. Eeuwig duel"
         />
       </div>
 
-      {/* Format */}
-      <div>
-        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Puntensysteem</label>
-        <div className="grid grid-cols-2 gap-2">
-          {(['matchplay_points', 'winsonly'] as const).map(f => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFormat(f)}
-              className="py-3 rounded-xl border text-sm font-semibold"
-              style={
-                format === f
-                  ? { background: 'var(--color-gold-500)', color: '#040d1a', borderColor: 'transparent' }
-                  : { background: 'var(--bg-card)', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }
-              }
-            >
-              {f === 'matchplay_points' ? '2-1-0 punten' : 'Alleen winst'}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
-          {format === 'matchplay_points' ? 'Win = 2 pts · Gelijk = 1 pt · Verlies = 0 pts' : 'Win = 1 pt · Gelijk/Verlies = 0 pts'}
-        </p>
-      </div>
-
-      {/* End date (optional) */}
       <div>
         <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-          Einddatum <span className="font-normal">(optioneel)</span>
+          Speel tegen *
         </label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={e => setEndDate(e.target.value)}
-          className={inputClass}
-          style={inputStyle}
-        />
-      </div>
-
-      {/* Friends */}
-      <div>
-        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Spelers uitnodigen</label>
+        <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+          Kies één of meer vrienden. Jullie kunnen op elk moment een nieuwe wedstrijd starten en het houdt bij wie de meeste partijen wint.
+        </p>
         {friends.length === 0 ? (
           <p className="text-sm py-2" style={{ color: 'var(--text-muted)' }}>
             Geen vrienden gevonden. Voeg eerst vrienden toe via je profiel.
@@ -163,11 +125,11 @@ export function NewCompetitionForm({ friends, currentUserId }: Props) {
       <button
         type="button"
         onClick={handleCreate}
-        disabled={!name.trim() || loading}
+        disabled={!name.trim() || selectedFriends.length === 0 || loading}
         className="w-full py-4 rounded-2xl font-semibold text-base transition-opacity disabled:opacity-40"
         style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
       >
-        {loading ? 'Aanmaken…' : `Competitie aanmaken${selectedFriends.length > 0 ? ` met ${selectedFriends.length + 1} spelers` : ''}`}
+        {loading ? 'Aanmaken…' : 'Duel starten'}
       </button>
     </div>
   )

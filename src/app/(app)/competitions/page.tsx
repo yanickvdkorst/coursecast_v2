@@ -17,7 +17,7 @@ export default async function CompetitionsPage() {
   return (
     <div className="px-4 pt-8 pb-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Competities</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Duels</h1>
         <Link href="/competitions/new" className="px-4 py-2 rounded-xl text-sm font-semibold" style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}>
           + Nieuw
         </Link>

@@ -35,7 +35,7 @@ export default async function NewCompetitionPage() {
           ←
         </Link>
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          Nieuwe competitie
+          Nieuw duel
         </h1>
       </div>
       <NewCompetitionForm friends={friends} currentUserId={user.id} />

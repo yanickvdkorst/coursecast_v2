@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   },
   {
     href: '/tournaments',
-    label: 'Tournaments',
+    label: 'Toernooien',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8M12 17v4M7 4h10l-1 8H8L7 4zM5 4H4a1 1 0 000 2h1M19 4h1a1 1 0 010 2h-1" />
