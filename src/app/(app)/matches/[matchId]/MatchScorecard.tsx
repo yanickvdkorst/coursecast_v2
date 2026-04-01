@@ -34,7 +34,6 @@ export function MatchScorecard({
   const offlineQueue = useRef<Array<{ holeNumber: number; result: ScoringResult }>>([])
   const supabase = getSupabaseBrowserClient()
 
-  const isPlayerA = currentUserId === match.player_a_id
   const matchStatus = computeMatchStatus(holeResults, match.player_a_id, match.player_b_id, totalHoles)
 
   // ── Realtime subscription ────────────────────────────────────
@@ -50,9 +49,7 @@ export function MatchScorecard({
             setHoleResults(prev => {
               const existing = prev.findIndex(hr => hr.hole_number === newRow.hole_number)
               if (existing >= 0) {
-                const updated = [...prev]
-                updated[existing] = newRow
-                return updated
+                const updated = [...prev]; updated[existing] = newRow; return updated
               }
               return [...prev, newRow]
             })
@@ -62,14 +59,11 @@ export function MatchScorecard({
           }
         }
       )
-      .subscribe((status) => {
-        setOnline(status === 'SUBSCRIBED')
-      })
+      .subscribe((status) => setOnline(status === 'SUBSCRIBED'))
 
     return () => { supabase.removeChannel(channel) }
   }, [match.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Offline queue flush ──────────────────────────────────────
   useEffect(() => {
     if (!online || offlineQueue.current.length === 0) return
     const queue = [...offlineQueue.current]
@@ -77,30 +71,17 @@ export function MatchScorecard({
     queue.forEach(({ holeNumber, result }) => scoreHole(holeNumber, result))
   }, [online]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Score a hole ─────────────────────────────────────────────
   const scoreHole = useCallback(async (holeNumber: number, result: ScoringResult) => {
-    if (!online) {
-      // Queue for later, apply optimistically
-      offlineQueue.current.push({ holeNumber, result })
-    }
+    if (!online) offlineQueue.current.push({ holeNumber, result })
 
-    // Optimistic update
     const tempId = `temp-${holeNumber}`
     setHoleResults(prev => {
       const existing = prev.findIndex(hr => hr.hole_number === holeNumber)
       const newRow: HoleResult = {
-        id: tempId,
-        match_id: match.id,
-        hole_number: holeNumber,
-        result,
-        recorded_by: currentUserId,
-        recorded_at: new Date().toISOString(),
+        id: tempId, match_id: match.id, hole_number: holeNumber, result,
+        recorded_by: currentUserId, recorded_at: new Date().toISOString(),
       }
-      if (existing >= 0) {
-        const updated = [...prev]
-        updated[existing] = newRow
-        return updated
-      }
+      if (existing >= 0) { const u = [...prev]; u[existing] = newRow; return u }
       return [...prev, newRow]
     })
 
@@ -113,116 +94,103 @@ export function MatchScorecard({
         { match_id: match.id, hole_number: holeNumber, result, recorded_by: currentUserId },
         { onConflict: 'match_id,hole_number' }
       )
-      .select()
-      .single()
-
+      .select().single()
     setSavingHole(null)
 
-    if (error) {
-      // Rollback
-      setHoleResults(initialHoleResults)
-      console.error('Failed to save hole result', error)
-      return
-    }
-
-    // Replace temp with real row
-    if (data) {
-      setHoleResults(prev =>
-        prev.map(hr => hr.id === tempId ? data as HoleResult : hr)
-      )
-    }
+    if (error) { setHoleResults(initialHoleResults); return }
+    if (data) setHoleResults(prev => prev.map(hr => hr.id === tempId ? data as HoleResult : hr))
   }, [online, match.id, currentUserId, supabase, initialHoleResults])
 
   const clearHole = useCallback(async (holeNumber: number) => {
     setHoleResults(prev => prev.filter(hr => hr.hole_number !== holeNumber))
-    await supabase
-      .from('hole_results')
-      .delete()
-      .eq('match_id', match.id)
-      .eq('hole_number', holeNumber)
+    await supabase.from('hole_results').delete().eq('match_id', match.id).eq('hole_number', holeNumber)
   }, [match.id, supabase])
 
   const leaderName = matchStatus.leaderId === match.player_a_id
-    ? (playerA.full_name || playerA.username)
+    ? (playerA.full_name || playerA.username).split(' ')[0]
     : matchStatus.leaderId === match.player_b_id
-    ? (playerB.full_name || playerB.username)
+    ? (playerB.full_name || playerB.username).split(' ')[0]
     : null
+
+  const nameA = (playerA.full_name || playerA.username).split(' ')[0]
+  const nameB = (playerB.full_name || playerB.username).split(' ')[0]
 
   return (
     <div className="flex flex-col min-h-dvh" style={{ background: 'var(--bg-primary)' }}>
 
       {/* ── Header ── */}
       <header
-        className="sticky top-0 z-10 px-4 py-3 border-b"
-        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}
+        className="sticky top-0 z-10 px-4 pt-3 pb-3"
+        style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}
       >
-        <div className="flex items-center justify-between max-w-lg mx-auto">
-          <Link href="/matches" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }}>
-            ←
+        <div className="flex items-center justify-between max-w-lg mx-auto mb-2.5">
+          <Link href="/matches" style={{ color: 'var(--text-muted)' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
           </Link>
 
-          {/* Players */}
-          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-            <span>{playerA.full_name || playerA.username}</span>
-            <span style={{ color: 'var(--text-muted)' }}>vs</span>
-            <span>{playerB.full_name || playerB.username}</span>
+          <div className="text-center">
+            <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <span>{nameA}</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 300 }}>vs</span>
+              <span>{nameB}</span>
+            </div>
+            {course && (
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{course.name}</p>
+            )}
           </div>
 
-          {/* Online indicator */}
           <div
             className="w-2 h-2 rounded-full"
-            style={{ background: online ? 'var(--color-gold-500)' : '#ef4444' }}
-            title={online ? 'Connected' : 'Offline'}
+            style={{ background: online ? '#4ade80' : '#ef4444' }}
+            title={online ? 'Verbonden' : 'Offline'}
           />
         </div>
 
-        {/* Match status */}
-        <div className="text-center mt-2">
-          {matchStatus.isComplete ? (
-            <p className="text-base font-bold" style={{ color: 'var(--color-gold-500)' }}>
-              {matchStatus.resultSummary === 'AS'
-                ? 'All Square — Match Halved'
-                : `${leaderName} wins ${matchStatus.resultSummary}`}
-            </p>
-          ) : matchStatus.holesPlayed === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {course?.name ?? '18 holes'} · Tap to score each hole
-            </p>
-          ) : (
-            <p className="text-sm font-semibold" style={{ color: 'var(--color-gold-500)' }}>
-              {matchStatus.leaderId === null
-                ? `All Square · ${matchStatus.holesRemaining} to play`
-                : `${leaderName} ${matchStatus.resultSummary} · ${matchStatus.holesRemaining} to play`}
-            </p>
-          )}
+        {/* Status pill */}
+        <div className="max-w-lg mx-auto">
+          <div
+            className="px-4 py-2 rounded-xl text-center"
+            style={{ background: matchStatus.isComplete ? 'rgba(201,162,39,0.12)' : 'var(--bg-elevated)' }}
+          >
+            {matchStatus.isComplete ? (
+              <p className="text-sm font-bold" style={{ color: 'var(--color-gold-500)' }}>
+                {matchStatus.resultSummary === 'AS'
+                  ? 'Gelijk gespeeld'
+                  : `${leaderName} wint · ${matchStatus.resultSummary}`}
+              </p>
+            ) : matchStatus.holesPlayed === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Tik op een hole om te scoren
+              </p>
+            ) : (
+              <p className="text-sm font-semibold" style={{ color: 'var(--color-gold-500)' }}>
+                {matchStatus.leaderId === null
+                  ? `Gelijk · nog ${matchStatus.holesRemaining} te gaan`
+                  : `${leaderName} staat ${matchStatus.resultSummary} · nog ${matchStatus.holesRemaining}`}
+              </p>
+            )}
+          </div>
         </div>
       </header>
 
       {/* ── Hole list ── */}
-      <div className="flex-1 overflow-y-auto pb-24">
-        <div className="max-w-lg mx-auto divide-y" style={{ borderColor: 'var(--border-color)' }}>
-          {Array.from({ length: totalHoles }, (_, i) => i + 1).map(holeNumber => {
-            const hr = getHoleResult(holeResults, holeNumber)
-            const isSaving = savingHole === holeNumber
-            const par = course?.par?.[holeNumber - 1] ?? null
-
-            return (
-              <HoleRow
-                key={holeNumber}
-                holeNumber={holeNumber}
-                par={par}
-                holeResult={hr}
-                isSaving={isSaving}
-                isPlayerA={isPlayerA}
-                playerAName={(playerA.full_name || playerA.username).split(' ')[0]}
-                playerBName={(playerB.full_name || playerB.username).split(' ')[0]}
-                isMatchComplete={matchStatus.isComplete}
-                onScore={(result) => scoreHole(holeNumber, result)}
-                onClear={() => clearHole(holeNumber)}
-              />
-            )
-          })}
-        </div>
+      <div className="flex-1 overflow-y-auto pb-32 max-w-lg mx-auto w-full">
+        {Array.from({ length: totalHoles }, (_, i) => i + 1).map(holeNumber => (
+          <HoleRow
+            key={holeNumber}
+            holeNumber={holeNumber}
+            par={course?.par?.[holeNumber - 1] ?? null}
+            holeResult={getHoleResult(holeResults, holeNumber)}
+            isSaving={savingHole === holeNumber}
+            playerAName={nameA}
+            playerBName={nameB}
+            isMatchComplete={matchStatus.isComplete}
+            onScore={(result) => scoreHole(holeNumber, result)}
+            onClear={() => clearHole(holeNumber)}
+          />
+        ))}
       </div>
     </div>
   )
@@ -235,7 +203,6 @@ interface HoleRowProps {
   par: number | null
   holeResult: HoleResult | undefined
   isSaving: boolean
-  isPlayerA: boolean
   playerAName: string
   playerBName: string
   isMatchComplete: boolean
@@ -244,70 +211,68 @@ interface HoleRowProps {
 }
 
 function HoleRow({
-  holeNumber,
-  par,
-  holeResult,
-  isSaving,
-  playerAName,
-  playerBName,
-  isMatchComplete,
-  onScore,
-  onClear,
+  holeNumber, par, holeResult, isSaving,
+  playerAName, playerBName, isMatchComplete, onScore, onClear,
 }: HoleRowProps) {
   const current = holeResult?.result ?? null
+  const scored = current !== null
 
-  const buttons: Array<{ label: string; result: ScoringResult; active: boolean; color: string }> = [
-    { label: playerAName, result: 'player_a', active: current === 'player_a', color: 'var(--color-gold-500)' },
-    { label: 'Gelijk', result: 'halved', active: current === 'halved', color: 'var(--color-navy-500)' },
-    { label: playerBName, result: 'player_b', active: current === 'player_b', color: '#4f8ef7' },
+  const buttons: Array<{ label: string; result: ScoringResult; activeBg: string; activeColor: string }> = [
+    { label: playerAName, result: 'player_a', activeBg: 'var(--color-gold-500)', activeColor: '#07101e' },
+    { label: 'Gelijk',    result: 'halved',   activeBg: 'var(--bg-elevated)',     activeColor: 'var(--text-primary)' },
+    { label: playerBName, result: 'player_b', activeBg: '#2563eb',                activeColor: '#ffffff' },
   ]
 
   return (
     <div
-      className={cn(
-        'flex items-center px-4 py-3 gap-3',
-        holeResult ? '' : ''
-      )}
-      style={{ background: 'var(--bg-primary)' }}
+      className="flex items-center px-4 py-3 gap-3"
+      style={{
+        borderBottom: '1px solid var(--border-color)',
+        background: scored ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+        transition: 'background 0.15s ease',
+      }}
     >
-      {/* Hole number + par */}
-      <div className="w-10 shrink-0 text-center">
-        <p className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+      {/* Hole number */}
+      <div className="w-8 shrink-0 text-center">
+        <p
+          className="text-base font-bold"
+          style={{ color: scored ? 'var(--color-gold-500)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}
+        >
           {holeNumber}
         </p>
         {par && (
-          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-            par {par}
+          <p className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            {par}
           </p>
         )}
       </div>
 
       {/* Score buttons */}
-      <div className="flex gap-2 flex-1">
-        {buttons.map(btn => (
-          <button
-            key={btn.label}
-            onClick={() => {
-              if (btn.active) {
-                onClear()
-              } else {
-                onScore(btn.result)
+      <div className="flex gap-1.5 flex-1">
+        {buttons.map(btn => {
+          const active = current === btn.result
+          return (
+            <button
+              key={btn.result}
+              onClick={() => active ? onClear() : onScore(btn.result)}
+              disabled={isMatchComplete || isSaving}
+              className={cn(
+                'flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-[0.97] disabled:opacity-40',
+              )}
+              style={
+                active
+                  ? { background: btn.activeBg, color: btn.activeColor }
+                  : {
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border-color)',
+                    }
               }
-            }}
-            disabled={isMatchComplete || isSaving}
-            className={cn(
-              'flex-1 py-3 rounded-xl text-sm font-bold tracking-wide transition-all active:scale-95',
-              'disabled:opacity-50'
-            )}
-            style={
-              btn.active
-                ? { background: btn.color, color: btn.result === 'halved' ? '#fff' : '#040d1a' }
-                : { background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }
-            }
-          >
-            {isSaving && btn.active ? '…' : btn.label}
-          </button>
-        ))}
+            >
+              {isSaving && active ? '…' : btn.label}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
