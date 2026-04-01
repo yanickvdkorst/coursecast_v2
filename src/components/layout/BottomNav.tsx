@@ -34,8 +34,8 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: '/competitions',
-    label: 'Standings',
+    href: '/rankings',
+    label: 'Rankings',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 17h4v4H3zM10 11h4v10h-4zM17 5h4v16h-4z" />
