@@ -34,11 +34,11 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: '/rankings',
-    label: 'Rankings',
+    href: '/competitions',
+    label: 'Duels',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-6 h-6">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 17h4v4H3zM10 11h4v10h-4zM17 5h4v16h-4z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
       </svg>
     ),
   },

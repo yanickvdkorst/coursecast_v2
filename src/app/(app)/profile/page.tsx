@@ -71,6 +71,21 @@ export default async function ProfilePage() {
         style={{ borderColor: 'var(--border-color)' }}
       >
         <Link
+          href="/rankings"
+          className="flex items-center justify-between px-4 py-4"
+          style={{ background: 'var(--bg-card)' }}
+        >
+          <div>
+            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+              Rankings
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              Top 10 meeste wins
+            </p>
+          </div>
+          <span style={{ color: 'var(--color-gold-500)' }}>→</span>
+        </Link>
+        <Link
           href="/profile/friends"
           className="flex items-center justify-between px-4 py-4"
           style={{ background: 'var(--bg-card)' }}
