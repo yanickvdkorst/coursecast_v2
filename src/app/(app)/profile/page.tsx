@@ -15,15 +15,19 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .single()
 
+  const hcpDisplay = profile?.handicap !== null && profile?.handicap !== undefined
+    ? (profile.handicap > 0 ? `+${profile.handicap}` : String(profile.handicap))
+    : null
+
   return (
-    <div className="px-4 pt-8 pb-4 max-w-lg mx-auto">
+    <div className="px-4 pt-8 pb-24 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold mb-8" style={{ color: 'var(--text-primary)' }}>
-        Profile
+        Profiel
       </h1>
 
       {/* Avatar + info */}
       <div
-        className="flex items-center gap-4 p-4 rounded-2xl border mb-6"
+        className="flex items-center gap-4 p-4 rounded-2xl border mb-2"
         style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
       >
         <div
@@ -32,22 +36,38 @@ export default async function ProfilePage() {
         >
           {(profile?.full_name || profile?.username || 'G')[0].toUpperCase()}
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-            {profile?.full_name}
+            {profile?.full_name || '—'}
           </p>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             @{profile?.username}
           </p>
-          <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--color-gold-500)' }}>
-            {profile?.role}
-          </p>
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            {hcpDisplay && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--bg-secondary)', color: 'var(--color-gold-500)' }}>
+                HCP {hcpDisplay}
+              </span>
+            )}
+            {profile?.golf_club && (
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {profile.golf_club}
+              </span>
+            )}
+          </div>
         </div>
+        <Link
+          href="/profile/edit"
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
+          style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+        >
+          Bewerk
+        </Link>
       </div>
 
       {/* Settings */}
       <div
-        className="rounded-2xl border divide-y overflow-hidden mb-6"
+        className="rounded-2xl border divide-y overflow-hidden mb-6 mt-6"
         style={{ borderColor: 'var(--border-color)' }}
       >
         <Link

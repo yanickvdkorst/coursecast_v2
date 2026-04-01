@@ -303,6 +303,8 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           full_name: string | null
+          golf_club: string | null
+          handicap: number | null
           id: string
           role: string
           theme: string
@@ -312,6 +314,8 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          golf_club?: string | null
+          handicap?: number | null
           id: string
           role?: string
           theme?: string
@@ -321,6 +325,8 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          golf_club?: string | null
+          handicap?: number | null
           id?: string
           role?: string
           theme?: string
