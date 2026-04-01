@@ -141,6 +141,30 @@ export type Database = {
           },
         ]
       }
+      friendships: {
+        Row: {
+          id: string
+          requester_id: string
+          addressee_id: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          requester_id: string
+          addressee_id: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          requester_id?: string
+          addressee_id?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       hole_results: {
         Row: {
           hole_number: number

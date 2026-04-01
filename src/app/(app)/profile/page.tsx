@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { SignOutButton } from '@/components/auth/SignOutButton'
+import Link from 'next/link'
 
 export default async function ProfilePage() {
   const supabase = await getSupabaseServerClient()
@@ -49,16 +50,31 @@ export default async function ProfilePage() {
         className="rounded-2xl border divide-y overflow-hidden mb-6"
         style={{ borderColor: 'var(--border-color)' }}
       >
-        <div
+        <Link
+          href="/profile/friends"
           className="flex items-center justify-between px-4 py-4"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}
+          style={{ background: 'var(--bg-card)' }}
         >
           <div>
             <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-              Appearance
+              Vrienden
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              Dark or light theme
+              Bekijk en beheer je vrienden
+            </p>
+          </div>
+          <span style={{ color: 'var(--color-gold-500)' }}>→</span>
+        </Link>
+        <div
+          className="flex items-center justify-between px-4 py-4"
+          style={{ background: 'var(--bg-card)' }}
+        >
+          <div>
+            <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+              Weergave
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              Donker of licht thema
             </p>
           </div>
           <ThemeToggle />

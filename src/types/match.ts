@@ -8,6 +8,7 @@ export type Tournament = Database['public']['Tables']['tournaments']['Row']
 export type TournamentPlayer = Database['public']['Tables']['tournament_players']['Row']
 export type Competition = Database['public']['Tables']['competitions']['Row']
 export type CompetitionPlayer = Database['public']['Tables']['competition_players']['Row']
+export type Friendship = Database['public']['Tables']['friendships']['Row']
 
 export interface MatchStatus {
   leaderId: string | null

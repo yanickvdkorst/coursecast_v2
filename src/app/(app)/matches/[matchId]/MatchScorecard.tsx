@@ -214,8 +214,8 @@ export function MatchScorecard({
                 holeResult={hr}
                 isSaving={isSaving}
                 isPlayerA={isPlayerA}
-                playerAName={playerA.full_name || playerA.username}
-                playerBName={playerB.full_name || playerB.username}
+                playerAName={(playerA.full_name || playerA.username).split(' ')[0]}
+                playerBName={(playerB.full_name || playerB.username).split(' ')[0]}
                 isMatchComplete={matchStatus.isComplete}
                 onScore={(result) => scoreHole(holeNumber, result)}
                 onClear={() => clearHole(holeNumber)}
@@ -248,30 +248,18 @@ function HoleRow({
   par,
   holeResult,
   isSaving,
-  isPlayerA,
   playerAName,
   playerBName,
   isMatchComplete,
   onScore,
   onClear,
 }: HoleRowProps) {
-  const myResult: ScoringResult | null = holeResult
-    ? isPlayerA
-      ? holeResult.result === 'player_a' ? 'player_a'
-        : holeResult.result === 'player_b' ? 'player_b'
-        : 'halved'
-      : holeResult.result === 'player_b' ? 'player_a'  // flip for player B POV
-        : holeResult.result === 'player_a' ? 'player_b'
-        : 'halved'
-    : null
+  const current = holeResult?.result ?? null
 
-  const winResult: ScoringResult = isPlayerA ? 'player_a' : 'player_b'
-  const loseResult: ScoringResult = isPlayerA ? 'player_b' : 'player_a'
-
-  const buttons: Array<{ label: string; result: ScoringResult; active: boolean }> = [
-    { label: 'WIN', result: winResult, active: myResult === 'player_a' },
-    { label: 'HALF', result: 'halved', active: myResult === 'halved' },
-    { label: 'LOSE', result: loseResult, active: myResult === 'player_b' },
+  const buttons: Array<{ label: string; result: ScoringResult; active: boolean; color: string }> = [
+    { label: playerAName, result: 'player_a', active: current === 'player_a', color: 'var(--color-gold-500)' },
+    { label: 'Gelijk', result: 'halved', active: current === 'halved', color: 'var(--color-navy-500)' },
+    { label: playerBName, result: 'player_b', active: current === 'player_b', color: '#4f8ef7' },
   ]
 
   return (
@@ -313,20 +301,8 @@ function HoleRow({
             )}
             style={
               btn.active
-                ? {
-                    background:
-                      btn.label === 'WIN'
-                        ? 'var(--color-gold-500)'
-                        : btn.label === 'LOSE'
-                        ? '#ef4444'
-                        : 'var(--color-navy-500)',
-                    color: btn.label === 'HALF' ? '#fff' : '#040d1a',
-                  }
-                : {
-                    background: 'var(--bg-card)',
-                    color: 'var(--text-muted)',
-                    border: '1px solid var(--border-color)',
-                  }
+                ? { background: btn.color, color: btn.result === 'halved' ? '#fff' : '#040d1a' }
+                : { background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }
             }
           >
             {isSaving && btn.active ? '…' : btn.label}

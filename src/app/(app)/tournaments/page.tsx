@@ -16,9 +16,12 @@ export default async function TournamentsPage() {
 
   return (
     <div className="px-4 pt-8 pb-4 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-8" style={{ color: 'var(--text-primary)' }}>
-        Tournaments
-      </h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Toernooien</h1>
+        <Link href="/tournaments/new" className="px-4 py-2 rounded-xl text-sm font-semibold" style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}>
+          + Nieuw
+        </Link>
+      </div>
 
       {tournaments.length === 0 ? (
         <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>
