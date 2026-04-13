@@ -18,6 +18,9 @@ export default async function DashboardPage() {
       .limit(5),
   ])
 
+  // First-time users without a name → onboarding (no extra DB call, uses already-fetched profile)
+  if (!profile?.full_name) redirect('/onboarding')
+
   const initials = (profile?.full_name || profile?.username || 'G')
     .split(' ')
     .slice(0, 2)

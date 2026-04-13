@@ -9,13 +9,9 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -25,24 +21,28 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session — do not remove, required for SSR auth
+  // Required for session refresh — do not remove
   const { data: { user } } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
+  const { pathname } = request.nextUrl
 
-  // Unauthenticated users can only access auth routes
-  const isAuthRoute = pathname.startsWith('/(auth)') ||
-    pathname === '/sign-in' ||
-    pathname === '/sign-up' ||
-    pathname.startsWith('/auth/')
+  const isAuthRoute = pathname === '/sign-in' || pathname === '/sign-up' || pathname.startsWith('/auth/')
 
+  // Unauthenticated → sign-in
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'
     return NextResponse.redirect(url)
   }
 
-  // Admin-only routes
+  // Authenticated on sign-in/up → dashboard
+  if (user && (pathname === '/sign-in' || pathname === '/sign-up')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // Admin-only routes — single DB call, only for /admin/*
   if (pathname.startsWith('/admin') && user) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -57,34 +57,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Authenticated users visiting sign-in/sign-up → redirect to dashboard
-  if (user && (pathname === '/sign-in' || pathname === '/sign-up')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  // First-time users without a name → onboarding
-  const isOnboarding = pathname === '/onboarding'
-  if (user && !isOnboarding && !isAuthRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.full_name) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/onboarding'
-      return NextResponse.redirect(url)
-    }
-  }
-
   return supabaseResponse
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
