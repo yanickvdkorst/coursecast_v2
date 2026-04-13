@@ -15,7 +15,7 @@ export function SignInForm() {
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -40,14 +40,18 @@ export function SignInForm() {
 
   if (sent) {
     return (
-      <div className="text-center space-y-3">
-        <div className="text-4xl">⛳</div>
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Check your email
-        </h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          We sent a magic link to <strong>{email}</strong>
-        </p>
+      <div className="text-center py-4">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+          style={{ background: 'rgba(201,162,39,0.12)' }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-7 h-7" style={{ color: 'var(--color-gold-500)' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Controleer je e-mail</h3>
+        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>We hebben een inloglink gestuurd naar</p>
+        <p className="text-sm font-semibold" style={{ color: 'var(--color-gold-500)' }}>{email}</p>
       </div>
     )
   }
@@ -72,7 +76,8 @@ export function SignInForm() {
             color: 'var(--text-primary)',
             borderColor: 'var(--border-color)',
           }}
-          placeholder="you@example.com"
+          placeholder="jij@voorbeeld.nl"
+          autoComplete="email"
         />
       </div>
 
@@ -96,6 +101,7 @@ export function SignInForm() {
               borderColor: 'var(--border-color)',
             }}
             placeholder="••••••••"
+            autoComplete="current-password"
           />
         </div>
       )}
@@ -110,7 +116,7 @@ export function SignInForm() {
         className="w-full py-3 rounded-xl font-semibold text-base transition-opacity disabled:opacity-60"
         style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
       >
-        {loading ? 'Signing in…' : magicLink ? 'Send magic link' : 'Sign in'}
+        {loading ? 'Inloggen…' : magicLink ? 'Stuur inloglink' : 'Inloggen'}
       </button>
 
       <button
@@ -119,13 +125,13 @@ export function SignInForm() {
         className="w-full text-sm text-center transition-colors"
         style={{ color: 'var(--text-muted)' }}
       >
-        {magicLink ? 'Sign in with password instead' : 'Sign in with magic link'}
+        {magicLink ? 'Inloggen met wachtwoord' : 'Inloggen met e-maillink'}
       </button>
 
       <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-        No account?{' '}
+        Nog geen account?{' '}
         <Link href="/sign-up" className="font-medium" style={{ color: 'var(--color-gold-500)' }}>
-          Create one
+          Registreer
         </Link>
       </p>
     </form>

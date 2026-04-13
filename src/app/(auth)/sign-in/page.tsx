@@ -7,7 +7,7 @@ export default function SignInPage() {
         className="text-xl font-semibold mb-6"
         style={{ color: 'var(--text-primary)' }}
       >
-        Sign in
+        Inloggen
       </h2>
       <SignInForm />
     </>

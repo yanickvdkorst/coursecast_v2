@@ -101,6 +101,7 @@ export function SignUpForm() {
           className={inputClass}
           style={inputStyle}
           placeholder="Jan de Vries"
+          autoComplete="name"
         />
       </div>
 
@@ -117,6 +118,7 @@ export function SignUpForm() {
           style={inputStyle}
           placeholder="jan_devries"
           minLength={3}
+          autoComplete="username"
         />
       </div>
 
@@ -132,6 +134,7 @@ export function SignUpForm() {
           className={inputClass}
           style={inputStyle}
           placeholder="jij@voorbeeld.nl"
+          autoComplete="email"
         />
       </div>
 
@@ -148,6 +151,7 @@ export function SignUpForm() {
           style={inputStyle}
           placeholder="••••••••"
           minLength={6}
+          autoComplete="new-password"
         />
       </div>
 
