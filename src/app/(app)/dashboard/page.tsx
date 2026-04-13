@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
 
-  const [{ data: profile }, { data: activeMatches }] = await Promise.all([
+  const [{ data: profile }, { data: activeMatches }, { data: friendships }] = await Promise.all([
     supabase.from('profiles').select('full_name, username, handicap, golf_club').eq('id', user.id).single(),
     supabase
       .from('matches')
@@ -16,10 +16,17 @@ export default async function DashboardPage() {
       .in('status', ['pending', 'active'])
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('friendships')
+      .select('status')
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
   ])
 
   // First-time users without a name → onboarding (no extra DB call, uses already-fetched profile)
   if (!profile?.full_name) redirect('/onboarding')
+
+  const friendCount = (friendships ?? []).filter(f => f.status === 'accepted').length
+  const pendingCount = (friendships ?? []).filter(f => f.status === 'pending').length
 
   const initials = (profile?.full_name || profile?.username || 'G')
     .split(' ')
@@ -48,12 +55,13 @@ export default async function DashboardPage() {
             </p>
           )}
         </div>
-        <div
+        <Link
+          href="/profile"
           className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
           style={{ background: 'var(--color-gold-500)', color: '#07101e' }}
         >
           {initials}
-        </div>
+        </Link>
       </div>
 
       {/* ── Primary CTA ── */}
@@ -74,7 +82,7 @@ export default async function DashboardPage() {
       </Link>
 
       {/* ── Secondary actions ── */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-2 gap-3 mb-3">
         <Link
           href="/tournaments"
           className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium text-sm"
@@ -96,6 +104,41 @@ export default async function DashboardPage() {
           Duels
         </Link>
       </div>
+
+      {/* ── Friends card ── */}
+      <Link
+        href="/profile/friends"
+        className="flex items-center justify-between w-full px-4 py-3.5 rounded-2xl mb-8 font-medium text-sm"
+        style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
+      >
+        <div className="flex items-center gap-3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-5 h-5 shrink-0" style={{ color: 'var(--color-gold-500)' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+          </svg>
+          <div>
+            <span>Vrienden</span>
+            {friendCount > 0 && (
+              <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>{friendCount} {friendCount === 1 ? 'vriend' : 'vrienden'}</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {pendingCount > 0 && (
+            <span
+              className="text-xs font-bold px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--color-gold-500)', color: '#07101e' }}
+            >
+              {pendingCount}
+            </span>
+          )}
+          {friendCount === 0 && pendingCount === 0 && (
+            <span className="text-xs font-medium" style={{ color: 'var(--color-gold-500)' }}>Voeg vrienden toe</span>
+          )}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </div>
+      </Link>
 
       {/* ── Active matches ── */}
       <div className="flex items-center justify-between mb-3">
