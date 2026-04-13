@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { computeMatchStatus, getHoleResult } from '@/lib/matchplay/scoring'
 import { cn } from '@/lib/utils'
 import type { Match, Profile, Course, HoleResult } from '@/types/match'
+import { deleteMatch } from './actions'
 
 interface Props {
   match: Match
@@ -31,6 +32,7 @@ export function MatchScorecard({
   const [holeResults, setHoleResults] = useState<HoleResult[]>(initialHoleResults)
   const [savingHole, setSavingHole] = useState<number | null>(null)
   const [online, setOnline] = useState(true)
+  const [deleteState, setDeleteState] = useState<'idle' | 'confirm' | 'deleting'>('idle')
   const offlineQueue = useRef<Array<{ holeNumber: number; result: ScoringResult }>>([])
   const supabase = getSupabaseBrowserClient()
 
@@ -48,9 +50,7 @@ export function MatchScorecard({
             const newRow = payload.new as HoleResult
             setHoleResults(prev => {
               const existing = prev.findIndex(hr => hr.hole_number === newRow.hole_number)
-              if (existing >= 0) {
-                const updated = [...prev]; updated[existing] = newRow; return updated
-              }
+              if (existing >= 0) { const u = [...prev]; u[existing] = newRow; return u }
               return [...prev, newRow]
             })
           }
@@ -124,7 +124,7 @@ export function MatchScorecard({
         style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}
       >
         <div className="flex items-center justify-between max-w-lg mx-auto mb-2.5">
-          <Link href="/matches" style={{ color: 'var(--text-muted)' }}>
+          <Link href={match.competition_id ? `/competitions/${match.competition_id}` : match.tournament_id ? `/tournaments/${match.tournament_id}` : '/matches'} style={{ color: 'var(--text-muted)' }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
@@ -141,12 +141,44 @@ export function MatchScorecard({
             )}
           </div>
 
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ background: online ? '#4ade80' : '#ef4444' }}
-            title={online ? 'Verbonden' : 'Offline'}
-          />
+          {/* Delete button */}
+          <button
+            onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
+            style={{ color: deleteState === 'confirm' ? '#ef4444' : 'var(--text-muted)' }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </button>
         </div>
+
+        {/* Delete confirmation bar */}
+        {deleteState === 'confirm' && (
+          <div
+            className="max-w-lg mx-auto flex items-center justify-between px-4 py-2.5 rounded-xl mb-2"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
+          >
+            <p className="text-sm font-medium" style={{ color: '#ef4444' }}>Wedstrijd verwijderen?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteState('idle')}
+                className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
+              >
+                Annuleer
+              </button>
+              <form action={deleteMatch.bind(null, match.id)}>
+                <button
+                  type="submit"
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                  style={{ background: '#ef4444', color: '#fff' }}
+                >
+                  Verwijder
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Status pill */}
         <div className="max-w-lg mx-auto">
@@ -159,6 +191,9 @@ export function MatchScorecard({
                 {matchStatus.resultSummary === 'AS'
                   ? 'Gelijk gespeeld'
                   : `${leaderName} wint · ${matchStatus.resultSummary}`}
+                <span className="ml-2 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>
+                  Tik om te corrigeren
+                </span>
               </p>
             ) : matchStatus.holesPlayed === 0 ? (
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -186,7 +221,6 @@ export function MatchScorecard({
             isSaving={savingHole === holeNumber}
             playerAName={nameA}
             playerBName={nameB}
-            isMatchComplete={matchStatus.isComplete}
             onScore={(result) => scoreHole(holeNumber, result)}
             onClear={() => clearHole(holeNumber)}
           />
@@ -205,14 +239,13 @@ interface HoleRowProps {
   isSaving: boolean
   playerAName: string
   playerBName: string
-  isMatchComplete: boolean
   onScore: (result: ScoringResult) => void
   onClear: () => void
 }
 
 function HoleRow({
   holeNumber, par, holeResult, isSaving,
-  playerAName, playerBName, isMatchComplete, onScore, onClear,
+  playerAName, playerBName, onScore, onClear,
 }: HoleRowProps) {
   const current = holeResult?.result ?? null
   const scored = current !== null
@@ -232,7 +265,6 @@ function HoleRow({
         transition: 'background 0.15s ease',
       }}
     >
-      {/* Hole number */}
       <div className="w-8 shrink-0 text-center">
         <p
           className="text-base font-bold"
@@ -241,13 +273,10 @@ function HoleRow({
           {holeNumber}
         </p>
         {par && (
-          <p className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {par}
-          </p>
+          <p className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--text-muted)' }}>{par}</p>
         )}
       </div>
 
-      {/* Score buttons */}
       <div className="flex gap-1.5 flex-1">
         {buttons.map(btn => {
           const active = current === btn.result
@@ -255,18 +284,14 @@ function HoleRow({
             <button
               key={btn.result}
               onClick={() => active ? onClear() : onScore(btn.result)}
-              disabled={isMatchComplete || isSaving}
+              disabled={isSaving}
               className={cn(
                 'flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-150 active:scale-[0.97] disabled:opacity-40',
               )}
               style={
                 active
                   ? { background: btn.activeBg, color: btn.activeColor }
-                  : {
-                      background: 'var(--bg-card)',
-                      color: 'var(--text-secondary)',
-                      border: '1px solid var(--border-color)',
-                    }
+                  : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }
               }
             >
               {isSaving && active ? '…' : btn.label}
