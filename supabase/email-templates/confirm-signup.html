@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bevestig je account</title>
+</head>
+<body style="margin:0;padding:0;background-color:#040d18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#040d18;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+          <!-- Logo / Brand -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background-color:#c9a227;border-radius:12px;padding:10px 20px;">
+                    <span style="color:#07101e;font-size:18px;font-weight:700;letter-spacing:0.5px;">Matchplay</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#0c1828;border-radius:20px;border:1px solid rgba(255,255,255,0.07);padding:40px 36px;">
+
+              <!-- Icon -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:24px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background-color:rgba(201,162,39,0.12);border-radius:50%;width:56px;height:56px;text-align:center;vertical-align:middle;">
+                          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%23c9a227' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75'/%3E%3C/svg%3E" width="28" height="28" alt="" style="display:block;margin:14px auto;" />
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Heading -->
+              <p style="margin:0 0 8px;text-align:center;font-size:22px;font-weight:700;color:#e8eef8;">
+                Bevestig je e-mailadres
+              </p>
+              <p style="margin:0 0 32px;text-align:center;font-size:14px;color:#4a5e78;line-height:1.6;">
+                Je bent er bijna. Klik op de knop hieronder om je account te activeren en in te loggen.
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:32px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;background-color:#c9a227;color:#07101e;font-size:15px;font-weight:700;text-decoration:none;border-radius:14px;padding:14px 36px;letter-spacing:0.2px;">
+                      Account bevestigen
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;">
+                    <p style="margin:0 0 8px;font-size:12px;color:#4a5e78;text-align:center;">
+                      Knop werkt niet? Kopieer en plak deze link in je browser:
+                    </p>
+                    <p style="margin:0;font-size:11px;color:#7b8fa8;text-align:center;word-break:break-all;">
+                      {{ .ConfirmationURL }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top:24px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#2a3d54;">
+                Je ontvangt deze mail omdat je je hebt aangemeld bij Matchplay.<br />
+                Als je dit niet was, kun je deze mail negeren.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

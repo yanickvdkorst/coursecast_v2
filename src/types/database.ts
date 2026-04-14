@@ -434,6 +434,10 @@ export type Database = {
     Functions: {
       is_admin: { Args: never; Returns: boolean }
       is_match_participant: { Args: { match_id: string }; Returns: boolean }
+      delete_match_and_recompute: {
+        Args: { p_match_id: string; p_user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
