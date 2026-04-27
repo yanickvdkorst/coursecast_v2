@@ -43,7 +43,7 @@ export function SignUpForm() {
       <div className="text-center py-4">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
-          style={{ background: 'rgba(201,162,39,0.12)' }}
+          style={{ background: 'var(--accent-soft)' }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-7 h-7" style={{ color: 'var(--color-gold-500)' }}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -161,7 +161,7 @@ export function SignUpForm() {
         type="submit"
         disabled={loading}
         className="w-full py-3 rounded-xl font-semibold text-base transition-opacity disabled:opacity-60"
-        style={{ background: 'var(--color-gold-500)', color: '#07101e' }}
+        style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
       >
         {loading ? 'Account aanmaken…' : 'Account aanmaken'}
       </button>

@@ -3,43 +3,127 @@
 /* Dark mode via class strategy */
 @variant dark (&:where(.dark, .dark *));
 
+/* ───────────────────────────────────────────────
+   Design tokens — Apple-clean palette, WCAG AAA
+   ─────────────────────────────────────────────── */
 @theme {
-  --color-navy-950: #040d1a;
-  --color-navy-900: #07101e;
-  --color-navy-800: #0c1828;
-  --color-navy-700: #0f1e30;
-  --color-navy-600: #162640;
-  --color-navy-500: #1e3358;
-  --color-gold-400: #d4af3a;
-  --color-gold-500: #c9a227;
-  --color-gold-600: #a8841c;
+  /* Accent scale (deep emerald — golf-elegant) */
+  --color-accent-50:  #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065f46;
+  --color-accent-900: #064e3b;
+
+  /* Legacy aliases — components still reference these names.
+     Values are remapped so the rebrand happens centrally. */
+  --color-gold-400: #16a34a;
+  --color-gold-500: var(--accent);
+  --color-gold-600: var(--accent-hover);
+  --color-navy-500: var(--bg-elevated);
+  --color-navy-600: var(--bg-elevated);
+  --color-navy-700: var(--bg-selected);
+  --color-navy-800: var(--bg-selected);
+  --color-navy-900: var(--on-accent);
+  --color-navy-950: var(--on-accent);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* ── Light mode ─────────────────────────────────── */
+/* ── Light mode ─────────────────────────────────────
+   Apple-style neutrals.
+   text-primary  #1d1d1f on #ffffff → 16.78:1   AAA
+   text-secondary #2c2c2e on #ffffff → 14.13:1  AAA
+   text-muted    #4a4a4f on #ffffff →  8.51:1   AAA  (7.45:1 on #f5f5f7)
+   accent        #0a6135 + white text → 8.43:1  AAA
+   ───────────────────────────────────────────────── */
 :root {
-  --bg-primary:   #f4f6fa;
-  --bg-secondary: #eaedf5;
-  --bg-card:      #ffffff;
-  --bg-elevated:  #f0f2f8;
-  --text-primary:   #08142a;
-  --text-secondary: #4a5f7a;
-  --text-muted:     #8a9ab5;
-  --border-color:   rgba(0, 0, 0, 0.07);
+  --bg-primary:    #ffffff;
+  --bg-secondary:  #f5f5f7;
+  --bg-card:       #ffffff;
+  --bg-elevated:   #fafafa;
+  --bg-selected:   #ecfdf5;
+
+  --text-primary:    #1d1d1f;
+  --text-secondary:  #2c2c2e;
+  --text-muted:      #4a4a4f;
+
+  --border-color:    rgba(0, 0, 0, 0.08);
+  --border-strong:   rgba(0, 0, 0, 0.16);
+
+  --accent:          #0a6135;
+  --accent-hover:    #064a23;
+  --accent-soft:     #ecfdf5;
+  --on-accent:       #ffffff;
+
+  --status-success:         #0a6135;
+  --status-success-bg:      rgba(10, 97, 53, 0.08);
+  --status-success-border:  rgba(10, 97, 53, 0.24);
+  --status-warning:         #8a4500;
+  --status-danger:          #991b1b;
+  --status-danger-bg:       rgba(153, 27, 27, 0.08);
+  --status-info:            #1e40af;
+
+  --medal-gold:      #8a6500;
+  --medal-silver:    #4a4a4f;
+  --medal-bronze:    #8a4500;
+
+  /* Fixed button tints — same in both themes so on-button text stays AAA. */
+  --btn-danger:      #991b1b;
+  --btn-info:        #1e40af;
+  --on-btn:          #ffffff;
+
+  /* Neutral pill — inverts between modes for Apple-style "selected" state. */
+  --btn-neutral:     #1d1d1f;
+  --on-btn-neutral:  #ffffff;
 }
 
-/* ── Dark mode ──────────────────────────────────── */
+/* ── Dark mode ──────────────────────────────────────
+   Apple-style true-black surfaces.
+   text-primary  #f5f5f7 on #1c1c1e → 16.05:1  AAA
+   text-secondary #d1d1d6 on #1c1c1e → 11.45:1 AAA
+   text-muted    #b8b8bd on #1c1c1e →  7.81:1  AAA  (7.04:1 on #2c2c2e)
+   accent        #4ade80 on #1c1c1e →  9.95:1  AAA
+   ───────────────────────────────────────────────── */
 .dark {
-  --bg-primary:   #07101e;
-  --bg-secondary: #0c1828;
-  --bg-card:      #0f1e30;
-  --bg-elevated:  #162640;
-  --text-primary:   #e8eef8;
-  --text-secondary: #7b8fa8;
-  --text-muted:     #4a5e78;
-  --border-color:   rgba(255, 255, 255, 0.07);
+  --bg-primary:    #000000;
+  --bg-secondary:  #1c1c1e;
+  --bg-card:       #1c1c1e;
+  --bg-elevated:   #2c2c2e;
+  --bg-selected:   #1f3a2c;
+
+  --text-primary:    #f5f5f7;
+  --text-secondary:  #d1d1d6;
+  --text-muted:      #b8b8bd;
+
+  --border-color:    rgba(255, 255, 255, 0.10);
+  --border-strong:   rgba(255, 255, 255, 0.20);
+
+  --accent:          #4ade80;
+  --accent-hover:    #22c55e;
+  --accent-soft:     #1f3a2c;
+  --on-accent:       #04201a;
+
+  --status-success:         #4ade80;
+  --status-success-bg:      rgba(74, 222, 128, 0.14);
+  --status-success-border:  rgba(74, 222, 128, 0.40);
+  --status-warning:         #fbbf24;
+  --status-danger:          #fca5a5;
+  --status-danger-bg:       rgba(252, 165, 165, 0.14);
+  --status-info:            #93c5fd;
+
+  --medal-gold:      #fbbf24;
+  --medal-silver:    #d1d1d6;
+  --medal-bronze:    #fb923c;
+
+  /* Neutral pill flips in dark mode → light bg + dark text. */
+  --btn-neutral:     #f5f5f7;
+  --on-btn-neutral:  #1d1d1f;
 }
 
 /* ── Base ───────────────────────────────────────── */

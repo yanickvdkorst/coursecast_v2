@@ -78,7 +78,7 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
               >
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                  style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+                  style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
                 >
                   {(player.full_name || player.username)[0].toUpperCase()}
                 </div>
@@ -94,7 +94,7 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity disabled:opacity-50"
                   style={{
                     background: alreadyAdded ? 'var(--bg-secondary)' : 'var(--color-gold-500)',
-                    color: alreadyAdded ? 'var(--text-muted)' : '#040d1a',
+                    color: alreadyAdded ? 'var(--text-muted)' : 'var(--on-accent)',
                   }}
                 >
                   {alreadyAdded ? 'Toegevoegd' : sending === player.id ? '…' : 'Toevoegen'}

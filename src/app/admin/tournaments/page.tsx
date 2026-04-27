@@ -21,7 +21,7 @@ export default async function AdminTournamentsPage() {
         <Link
           href="/admin/tournaments/new"
           className="px-5 py-2.5 rounded-xl font-semibold"
-          style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+          style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
         >
           + New
         </Link>

@@ -58,7 +58,7 @@ export default async function DashboardPage() {
         <Link
           href="/profile"
           className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-          style={{ background: 'var(--color-gold-500)', color: '#07101e' }}
+          style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
         >
           {initials}
         </Link>
@@ -66,44 +66,20 @@ export default async function DashboardPage() {
 
       {/* ── Primary CTA ── */}
       <Link
-        href="/matches/new"
+        href="/play/new"
         className="flex items-center justify-between w-full px-5 py-4 rounded-2xl mb-3 font-semibold"
-        style={{ background: 'var(--color-gold-500)', color: '#07101e' }}
+        style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
       >
         <div className="flex items-center gap-3">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          <span>Nieuwe wedstrijd</span>
+          <span>Nieuw spel</span>
         </div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5 opacity-70">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
         </svg>
       </Link>
-
-      {/* ── Secondary actions ── */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <Link
-          href="/tournaments"
-          className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium text-sm"
-          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-5 h-5 shrink-0" style={{ color: 'var(--color-gold-500)' }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
-          </svg>
-          Toernooien
-        </Link>
-        <Link
-          href="/competitions"
-          className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium text-sm"
-          style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} className="w-5 h-5 shrink-0" style={{ color: 'var(--color-gold-500)' }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-          </svg>
-          Duels
-        </Link>
-      </div>
 
       {/* ── Friends card ── */}
       <Link
@@ -126,7 +102,7 @@ export default async function DashboardPage() {
           {pendingCount > 0 && (
             <span
               className="text-xs font-bold px-2 py-0.5 rounded-full"
-              style={{ background: 'var(--color-gold-500)', color: '#07101e' }}
+              style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
             >
               {pendingCount}
             </span>
@@ -145,7 +121,7 @@ export default async function DashboardPage() {
         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
           Lopende wedstrijden
         </p>
-        <Link href="/matches" className="text-xs font-medium" style={{ color: 'var(--color-gold-500)' }}>
+        <Link href="/play" className="text-xs font-medium" style={{ color: 'var(--accent)' }}>
           Alle →
         </Link>
       </div>
@@ -189,7 +165,7 @@ export default async function DashboardPage() {
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                       vs {opponent?.full_name || opponent?.username}
                     </p>
-                    <p className="text-xs mt-0.5" style={{ color: match.status === 'active' ? '#4ade80' : 'var(--text-muted)' }}>
+                    <p className="text-xs mt-0.5" style={{ color: match.status === 'active' ? 'var(--status-success)' : 'var(--text-muted)' }}>
                       {match.status === 'pending' ? 'Nog niet begonnen' : 'Bezig'}
                     </p>
                   </div>

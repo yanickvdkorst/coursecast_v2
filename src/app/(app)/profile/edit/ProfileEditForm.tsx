@@ -110,7 +110,7 @@ export function ProfileEditForm({ initialFullName, initialHandicap, initialGolfC
         onClick={handleSave}
         disabled={!fullName.trim() || loading}
         className="w-full py-4 rounded-2xl font-semibold text-base transition-opacity disabled:opacity-40"
-        style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+        style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
       >
         {loading ? 'Opslaan…' : 'Opslaan'}
       </button>

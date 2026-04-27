@@ -32,7 +32,7 @@ export default async function ProfilePage() {
       >
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center text-2xl font-bold shrink-0"
-          style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+          style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
         >
           {(profile?.full_name || profile?.username || 'G')[0].toUpperCase()}
         </div>

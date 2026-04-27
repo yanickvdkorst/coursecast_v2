@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { FriendSearch } from './FriendSearch'
 import { FriendRequests } from './FriendRequests'
 import type { Profile } from '@/types/match'
-import Link from 'next/link'
+import { BackButton } from '@/components/ui/BackButton'
 
 export default async function FriendsPage() {
   const supabase = await getSupabaseServerClient()
@@ -53,9 +53,7 @@ export default async function FriendsPage() {
   return (
     <div className="px-4 pt-8 pb-4 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <Link href="/profile" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }}>
-          ←
-        </Link>
+        <BackButton fallback="/profile" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }} />
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
           Vrienden
         </h1>
@@ -106,7 +104,7 @@ export default async function FriendsPage() {
               >
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                  style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+                  style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
                 >
                   {(friend.full_name || friend.username)[0].toUpperCase()}
                 </div>

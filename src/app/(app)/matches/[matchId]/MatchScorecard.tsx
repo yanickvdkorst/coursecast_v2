@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import Link from 'next/link'
+import { BackButton } from '@/components/ui/BackButton'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { computeMatchStatus, getHoleResult } from '@/lib/matchplay/scoring'
 import { cn } from '@/lib/utils'
-import type { Match, Profile, Course, HoleResult } from '@/types/match'
+import type { Match, Profile, Course, HoleResult, MatchStatus } from '@/types/match'
 import { deleteMatch } from './actions'
 
 interface Props {
@@ -124,11 +124,14 @@ export function MatchScorecard({
         style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}
       >
         <div className="flex items-center justify-between max-w-lg mx-auto mb-2.5">
-          <Link href={match.competition_id ? `/competitions/${match.competition_id}` : match.tournament_id ? `/tournaments/${match.tournament_id}` : '/matches'} style={{ color: 'var(--text-muted)' }}>
+          <BackButton
+            fallback={match.competition_id ? `/competitions/${match.competition_id}` : match.tournament_id ? `/tournaments/${match.tournament_id}` : '/play'}
+            style={{ color: 'var(--text-muted)' }}
+          >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-          </Link>
+          </BackButton>
 
           <div className="text-center">
             <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -144,7 +147,7 @@ export function MatchScorecard({
           {/* Delete button */}
           <button
             onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
-            style={{ color: deleteState === 'confirm' ? '#ef4444' : 'var(--text-muted)' }}
+            style={{ color: deleteState === 'confirm' ? 'var(--status-danger)' : 'var(--text-muted)' }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -156,9 +159,9 @@ export function MatchScorecard({
         {deleteState === 'confirm' && (
           <div
             className="max-w-lg mx-auto flex items-center justify-between px-4 py-2.5 rounded-xl mb-2"
-            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}
+            style={{ background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}
           >
-            <p className="text-sm font-medium" style={{ color: '#ef4444' }}>Wedstrijd verwijderen?</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--status-danger)' }}>Wedstrijd verwijderen?</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setDeleteState('idle')}
@@ -171,7 +174,7 @@ export function MatchScorecard({
                 <button
                   type="submit"
                   className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                  style={{ background: '#ef4444', color: '#fff' }}
+                  style={{ background: 'var(--btn-danger)', color: 'var(--on-btn)' }}
                 >
                   Verwijder
                 </button>
@@ -180,33 +183,13 @@ export function MatchScorecard({
           </div>
         )}
 
-        {/* Status pill */}
+        {/* Status board — big tussenstand */}
         <div className="max-w-lg mx-auto">
-          <div
-            className="px-4 py-2 rounded-xl text-center"
-            style={{ background: matchStatus.isComplete ? 'rgba(201,162,39,0.12)' : 'var(--bg-elevated)' }}
-          >
-            {matchStatus.isComplete ? (
-              <p className="text-sm font-bold" style={{ color: 'var(--color-gold-500)' }}>
-                {matchStatus.resultSummary === 'AS'
-                  ? 'Gelijk gespeeld'
-                  : `${leaderName} wint · ${matchStatus.resultSummary}`}
-                <span className="ml-2 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>
-                  Tik om te corrigeren
-                </span>
-              </p>
-            ) : matchStatus.holesPlayed === 0 ? (
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Tik op een hole om te scoren
-              </p>
-            ) : (
-              <p className="text-sm font-semibold" style={{ color: 'var(--color-gold-500)' }}>
-                {matchStatus.leaderId === null
-                  ? `Gelijk · nog ${matchStatus.holesRemaining} te gaan`
-                  : `${leaderName} staat ${matchStatus.resultSummary} · nog ${matchStatus.holesRemaining}`}
-              </p>
-            )}
-          </div>
+          <StatusBoard
+            matchStatus={matchStatus}
+            leaderName={leaderName}
+            holesRemaining={matchStatus.holesRemaining}
+          />
         </div>
       </header>
 
@@ -251,9 +234,9 @@ function HoleRow({
   const scored = current !== null
 
   const buttons: Array<{ label: string; result: ScoringResult; activeBg: string; activeColor: string }> = [
-    { label: playerAName, result: 'player_a', activeBg: 'var(--color-gold-500)', activeColor: '#07101e' },
-    { label: 'Gelijk',    result: 'halved',   activeBg: 'var(--bg-elevated)',     activeColor: 'var(--text-primary)' },
-    { label: playerBName, result: 'player_b', activeBg: '#2563eb',                activeColor: '#ffffff' },
+    { label: playerAName, result: 'player_a', activeBg: 'var(--color-gold-500)', activeColor: 'var(--on-accent)' },
+    { label: 'Gelijk',    result: 'halved',   activeBg: 'var(--btn-neutral)', activeColor: 'var(--on-btn-neutral)' },
+    { label: playerBName, result: 'player_b', activeBg: 'var(--btn-info)',   activeColor: 'var(--on-btn)' },
   ]
 
   return (
@@ -299,6 +282,73 @@ function HoleRow({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ── StatusBoard ──────────────────────────────────────────────
+
+interface StatusBoardProps {
+  matchStatus: MatchStatus
+  leaderName: string | null
+  holesRemaining: number
+}
+
+function StatusBoard({ matchStatus, leaderName, holesRemaining }: StatusBoardProps) {
+  // Empty state — no holes scored yet
+  if (!matchStatus.isComplete && matchStatus.holesPlayed === 0) {
+    return (
+      <div className="px-4 py-4 rounded-2xl text-center" style={{ background: 'var(--bg-elevated)' }}>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Tik op een hole om te scoren
+        </p>
+      </div>
+    )
+  }
+
+  const isAllSquare = matchStatus.leaderId === null
+  const isDormie = !matchStatus.isComplete && matchStatus.isDormie
+  // Strip "(Dormie)" suffix so we can render the modifier separately.
+  const cleanSummary = matchStatus.resultSummary.replace(/\s*\(Dormie\)\s*$/i, '').trim()
+
+  // Big-number variant: NUP, N&M, 1UP — anything matching digits at start.
+  const isBigNumber = /^\d/.test(cleanSummary)
+  const bigText = isAllSquare ? 'GELIJK' : (isBigNumber ? cleanSummary : cleanSummary.toUpperCase())
+  const bigColor = isAllSquare ? 'var(--text-primary)' : 'var(--accent)'
+
+  // Caption above the big number
+  const caption = matchStatus.isComplete
+    ? (isAllSquare ? 'Eindstand' : `${leaderName} wint`)
+    : (isAllSquare ? 'Tussenstand' : `${leaderName} staat voor`)
+
+  // Subtext below
+  const subtext = matchStatus.isComplete
+    ? 'Tik op een hole om te corrigeren'
+    : `Nog ${holesRemaining} ${holesRemaining === 1 ? 'hole' : 'holes'} te gaan${isDormie ? ' · Dormie' : ''}`
+
+  return (
+    <div
+      className="px-4 py-5 rounded-2xl text-center"
+      style={{
+        background: matchStatus.isComplete && !isAllSquare ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+      }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-muted)' }}>
+        {caption}
+      </p>
+      <p
+        className="font-black leading-none tabular-nums"
+        style={{
+          color: bigColor,
+          fontSize: bigText.length > 5 ? '3rem' : '4.5rem',
+          letterSpacing: '-0.03em',
+        }}
+      >
+        {bigText}
+      </p>
+      <p className="text-sm mt-2.5" style={{ color: 'var(--text-muted)' }}>
+        {subtext}
+      </p>
     </div>
   )
 }

@@ -44,7 +44,7 @@ export function FriendRequests({ requests }: { requests: Request[] }) {
         >
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-            style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+            style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
           >
             {(req.profile?.full_name || req.profile?.username || '?')[0].toUpperCase()}
           </div>
@@ -61,7 +61,7 @@ export function FriendRequests({ requests }: { requests: Request[] }) {
               onClick={() => respond(req.friendshipId, true)}
               disabled={acting === req.friendshipId}
               className="text-xs font-bold px-3 py-1.5 rounded-lg"
-              style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+              style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
             >
               {acting === req.friendshipId ? '…' : 'Accepteer'}
             </button>

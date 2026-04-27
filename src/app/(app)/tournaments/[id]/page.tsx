@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { BackButton } from '@/components/ui/BackButton'
 import type { Profile, Tournament, TournamentPlayer } from '@/types/match'
 import { startTournament } from './actions'
 
@@ -108,9 +109,7 @@ export default async function TournamentDetailPage({ params }: Props) {
     <div className="px-4 pt-8 pb-24 max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
-        <Link href="/tournaments" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }}>
-          ←
-        </Link>
+        <BackButton fallback="/tournaments" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }} />
         <h1 className="text-2xl font-bold flex-1" style={{ color: 'var(--text-primary)' }}>
           {t.name}
         </h1>
@@ -197,7 +196,7 @@ export default async function TournamentDetailPage({ params }: Props) {
                         const nameA = pA ? (pA.full_name || pA.username).split(' ')[0] : '?'
                         const nameB = pB ? (pB.full_name || pB.username).split(' ')[0] : '?'
                         const isMyMatch = m.player_a_id === user.id || m.player_b_id === user.id
-                        const statusColor = m.status === 'complete' ? 'var(--color-gold-500)' : m.status === 'active' ? '#4ade80' : 'var(--text-muted)'
+                        const statusColor = m.status === 'complete' ? 'var(--color-gold-500)' : m.status === 'active' ? 'var(--status-success)' : 'var(--text-muted)'
                         return (
                           <Link
                             key={m.id as string}
@@ -243,7 +242,7 @@ export default async function TournamentDetailPage({ params }: Props) {
             <Link
               href={`/tournaments/${id}/add-player`}
               className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-              style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+              style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
             >
               + Speler
             </Link>
@@ -262,7 +261,7 @@ export default async function TournamentDetailPage({ params }: Props) {
               >
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                  style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+                  style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
                 >
                   {(p.full_name || p.username)[0].toUpperCase()}
                 </div>
@@ -292,7 +291,7 @@ export default async function TournamentDetailPage({ params }: Props) {
           <button
             type="submit"
             className="w-full py-4 rounded-2xl font-semibold text-base"
-            style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+            style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
           >
             Toernooi starten
           </button>

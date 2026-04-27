@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { BackButton } from '@/components/ui/BackButton'
 import type { Profile, Competition, CompetitionPlayer } from '@/types/match'
 import { startCompetitionMatch } from './actions'
 
@@ -71,9 +72,7 @@ export default async function CompetitionDetailPage({ params }: Props) {
     <div className="px-4 pt-8 pb-24 max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/competitions" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }}>
-          ←
-        </Link>
+        <BackButton fallback="/competitions" className="text-xl leading-none" style={{ color: 'var(--text-muted)' }} />
         <h1 className="text-2xl font-bold flex-1" style={{ color: 'var(--text-primary)' }}>
           {c.name}
         </h1>
@@ -112,7 +111,7 @@ export default async function CompetitionDetailPage({ params }: Props) {
             <Link
               href={`/matches/${activeMatchByOpponent[opponentStats.player_id]}`}
               className="mt-5 inline-block px-6 py-3 rounded-xl font-semibold text-sm"
-              style={{ background: '#4ade8020', color: '#4ade80', border: '1px solid #4ade8060' }}
+              style={{ background: 'var(--status-success-bg)', color: 'var(--status-success)', border: '1px solid var(--status-success-border)' }}
             >
               Wedstrijd bezig → ga verder
             </Link>
@@ -121,9 +120,9 @@ export default async function CompetitionDetailPage({ params }: Props) {
               <button
                 type="submit"
                 className="px-6 py-3 rounded-xl font-semibold text-sm"
-                style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+                style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
               >
-                Nieuw duel spelen
+                Nieuwe wedstrijd starten
               </button>
             </form>
           )}
@@ -171,7 +170,7 @@ export default async function CompetitionDetailPage({ params }: Props) {
                       <Link
                         href={`/matches/${activeMatchId}`}
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
-                        style={{ background: '#4ade8020', color: '#4ade80', border: '1px solid #4ade8060' }}
+                        style={{ background: 'var(--status-success-bg)', color: 'var(--status-success)', border: '1px solid var(--status-success-border)' }}
                       >
                         Bezig →
                       </Link>
@@ -180,7 +179,7 @@ export default async function CompetitionDetailPage({ params }: Props) {
                         <button
                           type="submit"
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg shrink-0"
-                          style={{ background: 'var(--color-gold-500)', color: '#040d1a' }}
+                          style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
                         >
                           Speel
                         </button>
@@ -216,7 +215,7 @@ export default async function CompetitionDetailPage({ params }: Props) {
                   : 'Gepland'
               const statusColor =
                 m.status === 'complete' ? 'var(--color-gold-500)'
-                  : m.status === 'active' ? '#4ade80'
+                  : m.status === 'active' ? 'var(--status-success)'
                   : 'var(--text-muted)'
 
               return (

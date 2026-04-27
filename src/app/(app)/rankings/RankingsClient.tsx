@@ -32,7 +32,7 @@ export function RankingsClient({ players }: { players: PlayerStat[] }) {
             className="px-4 py-2 rounded-xl text-sm font-semibold"
             style={
               filter === f
-                ? { background: 'var(--color-gold-500)', color: '#040d1a' }
+                ? { background: 'var(--color-gold-500)', color: 'var(--on-accent)' }
                 : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }
             }
           >
@@ -71,7 +71,7 @@ export function RankingsClient({ players }: { players: PlayerStat[] }) {
             >
               <span
                 className="text-sm font-bold"
-                style={{ color: i === 0 ? 'var(--color-gold-500)' : i === 1 ? '#9ca3af' : i === 2 ? '#b45309' : 'var(--text-muted)' }}
+                style={{ color: i === 0 ? 'var(--color-gold-500)' : i === 1 ? 'var(--medal-silver)' : i === 2 ? 'var(--medal-bronze)' : 'var(--text-muted)' }}
               >
                 {i + 1}
               </span>
