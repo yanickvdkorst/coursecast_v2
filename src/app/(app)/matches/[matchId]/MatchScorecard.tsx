@@ -112,6 +112,13 @@ export function MatchScorecard({
     ? (playerB.full_name || playerB.username).split(' ')[0]
     : null
 
+  // Ryder Cup color of the leading player, used for the big up-score.
+  const leaderColor = matchStatus.leaderId === match.player_a_id
+    ? 'var(--player-a-text)'
+    : matchStatus.leaderId === match.player_b_id
+    ? 'var(--player-b-text)'
+    : null
+
   const nameA = (playerA.full_name || playerA.username).split(' ')[0]
   const nameB = (playerB.full_name || playerB.username).split(' ')[0]
 
@@ -188,6 +195,7 @@ export function MatchScorecard({
           <StatusBoard
             matchStatus={matchStatus}
             leaderName={leaderName}
+            leaderColor={leaderColor}
             holesRemaining={matchStatus.holesRemaining}
           />
         </div>
@@ -234,9 +242,9 @@ function HoleRow({
   const scored = current !== null
 
   const buttons: Array<{ label: string; result: ScoringResult; activeBg: string; activeColor: string }> = [
-    { label: playerAName, result: 'player_a', activeBg: 'var(--color-gold-500)', activeColor: 'var(--on-accent)' },
+    { label: playerAName, result: 'player_a', activeBg: 'var(--player-a)', activeColor: 'var(--on-btn)' },
     { label: 'Gelijk',    result: 'halved',   activeBg: 'var(--btn-neutral)', activeColor: 'var(--on-btn-neutral)' },
-    { label: playerBName, result: 'player_b', activeBg: 'var(--btn-info)',   activeColor: 'var(--on-btn)' },
+    { label: playerBName, result: 'player_b', activeBg: 'var(--player-b)', activeColor: 'var(--on-btn)' },
   ]
 
   return (
@@ -291,10 +299,11 @@ function HoleRow({
 interface StatusBoardProps {
   matchStatus: MatchStatus
   leaderName: string | null
+  leaderColor: string | null
   holesRemaining: number
 }
 
-function StatusBoard({ matchStatus, leaderName, holesRemaining }: StatusBoardProps) {
+function StatusBoard({ matchStatus, leaderName, leaderColor, holesRemaining }: StatusBoardProps) {
   // Empty state — no holes scored yet
   if (!matchStatus.isComplete && matchStatus.holesPlayed === 0) {
     return (
@@ -314,7 +323,7 @@ function StatusBoard({ matchStatus, leaderName, holesRemaining }: StatusBoardPro
   // Big-number variant: NUP, N&M, 1UP — anything matching digits at start.
   const isBigNumber = /^\d/.test(cleanSummary)
   const bigText = isAllSquare ? 'GELIJK' : (isBigNumber ? cleanSummary : cleanSummary.toUpperCase())
-  const bigColor = isAllSquare ? 'var(--text-primary)' : 'var(--accent)'
+  const bigColor = isAllSquare ? 'var(--text-primary)' : (leaderColor ?? 'var(--accent)')
 
   // Caption above the big number
   const caption = matchStatus.isComplete
@@ -330,7 +339,7 @@ function StatusBoard({ matchStatus, leaderName, holesRemaining }: StatusBoardPro
     <div
       className="px-4 py-5 rounded-2xl text-center"
       style={{
-        background: matchStatus.isComplete && !isAllSquare ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+        background: 'var(--bg-elevated)',
       }}
     >
       <p className="text-xs font-semibold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-muted)' }}>

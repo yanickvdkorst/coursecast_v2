@@ -81,6 +81,14 @@
   /* Neutral pill — inverts between modes for Apple-style "selected" state. */
   --btn-neutral:     #1d1d1f;
   --on-btn-neutral:  #ffffff;
+
+  /* Ryder Cup player colors — player A = red, player B = blue.
+     Button tints stay dark in both themes so white text stays AAA;
+     the *-text variants brighten in dark mode for the big up-score. */
+  --player-a:        #c8102e;
+  --player-b:        #1e40af;
+  --player-a-text:   #c8102e;
+  --player-b-text:   #1e40af;
 }
 
 /* ── Dark mode ──────────────────────────────────────
@@ -124,6 +132,10 @@
   /* Neutral pill flips in dark mode → light bg + dark text. */
   --btn-neutral:     #f5f5f7;
   --on-btn-neutral:  #1d1d1f;
+
+  /* Brighter Ryder Cup tints for the big up-score text on dark surfaces. */
+  --player-a-text:   #f87171;
+  --player-b-text:   #60a5fa;
 }
 
 /* ── Base ───────────────────────────────────────── */
