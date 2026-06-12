@@ -26,7 +26,12 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const isAuthRoute = pathname === '/sign-in' || pathname === '/sign-up' || pathname.startsWith('/auth/')
+  const isAuthRoute =
+    pathname === '/sign-in' ||
+    pathname === '/sign-up' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
+    pathname.startsWith('/auth/')
 
   // Unauthenticated → sign-in
   if (!user && !isAuthRoute) {

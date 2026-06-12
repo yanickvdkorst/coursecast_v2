@@ -1,16 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
-export function SignInForm() {
-  const router = useRouter()
+export function ForgotPasswordForm() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [magicLink, setMagicLink] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
@@ -21,19 +17,13 @@ export function SignInForm() {
     setError(null)
 
     const supabase = getSupabaseBrowserClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    })
 
-    if (magicLink) {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      })
-      if (error) setError(error.message)
-      else setSent(true)
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError(error.message)
-      else router.push('/dashboard')
-    }
+    // Always show the success state — never reveal whether an email exists.
+    if (error) setError(error.message)
+    else setSent(true)
 
     setLoading(false)
   }
@@ -50,14 +40,29 @@ export function SignInForm() {
           </svg>
         </div>
         <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Controleer je e-mail</h3>
-        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>We hebben een inloglink gestuurd naar</p>
-        <p className="text-sm font-semibold" style={{ color: 'var(--color-gold-500)' }}>{email}</p>
+        <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+          Als er een account bestaat voor
+        </p>
+        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-gold-500)' }}>{email}</p>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          dan hebben we een link gestuurd om je wachtwoord opnieuw in te stellen.
+        </p>
+        <Link href="/sign-in" className="inline-block mt-6 text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+          Terug naar inloggen
+        </Link>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Wachtwoord vergeten?</h2>
+        <p className="text-sm mb-2" style={{ color: 'var(--text-muted)' }}>
+          Vul je e-mailadres in, dan sturen we je een link om een nieuw wachtwoord in te stellen.
+        </p>
+      </div>
+
       <div>
         <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
           Email
@@ -81,36 +86,6 @@ export function SignInForm() {
         />
       </div>
 
-      {!magicLink && (
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-              Password
-            </label>
-            <Link href="/forgot-password" className="text-sm font-medium" style={{ color: 'var(--color-gold-500)' }}>
-              Wachtwoord vergeten?
-            </Link>
-          </div>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            className={cn(
-              'w-full px-4 py-3 rounded-xl border text-base outline-none transition-colors',
-              'focus:border-[var(--color-gold-500)]'
-            )}
-            style={{
-              background: 'var(--bg-card)',
-              color: 'var(--text-primary)',
-              borderColor: 'var(--border-color)',
-            }}
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-        </div>
-      )}
-
       {error && (
         <p className="text-red-400 text-sm">{error}</p>
       )}
@@ -121,22 +96,13 @@ export function SignInForm() {
         className="w-full py-3 rounded-xl font-semibold text-base transition-opacity disabled:opacity-60"
         style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
       >
-        {loading ? 'Inloggen…' : magicLink ? 'Stuur inloglink' : 'Inloggen'}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setMagicLink(!magicLink)}
-        className="w-full text-sm text-center transition-colors"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        {magicLink ? 'Inloggen met wachtwoord' : 'Inloggen met e-maillink'}
+        {loading ? 'Versturen…' : 'Stuur resetlink'}
       </button>
 
       <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-        Nog geen account?{' '}
-        <Link href="/sign-up" className="font-medium" style={{ color: 'var(--color-gold-500)' }}>
-          Registreer
+        Weet je het weer?{' '}
+        <Link href="/sign-in" className="font-medium" style={{ color: 'var(--color-gold-500)' }}>
+          Inloggen
         </Link>
       </p>
     </form>

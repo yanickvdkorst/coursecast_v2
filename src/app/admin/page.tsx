@@ -47,6 +47,23 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
+      <Link
+        href="/admin/matches"
+        className="flex items-center gap-3 p-5 rounded-2xl border font-medium mb-4 transition-colors"
+        style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+      >
+        <p className="text-2xl">⛳️</p>
+        <div className="flex-1">
+          <p className="font-semibold">Alle wedstrijden</p>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Bekijk wedstrijden van alle spelers
+          </p>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </Link>
+
       <div className="grid grid-cols-2 gap-4">
         <Link
           href="/admin/tournaments/new"

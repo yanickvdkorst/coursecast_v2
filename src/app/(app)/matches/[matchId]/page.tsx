@@ -28,9 +28,16 @@ export default async function MatchPage({ params }: Props) {
 
   if (!match) notFound()
 
-  // Only participants can view
+  // Only participants — or an admin — can view
   if (match.player_a_id !== user.id && match.player_b_id !== user.id) {
-    redirect('/matches')
+    const { data: viewer } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (viewer?.role !== 'admin') {
+      redirect('/matches')
+    }
   }
 
   // Fetch player profiles
