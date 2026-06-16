@@ -38,6 +38,43 @@ export function MatchScorecard({
   const offlineQueue = useRef<Array<{ holeNumber: number; result: ScoringResult }>>([])
   const supabase = getSupabaseBrowserClient()
 
+  // ── Spectator share link ─────────────────────────────────────
+  const isParticipant = currentUserId === match.player_a_id || currentUserId === match.player_b_id
+  const [shareToken, setShareToken] = useState<string | null>(match.share_token ?? null)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareBusy, setShareBusy] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [canShare, setCanShare] = useState(false)
+
+  useEffect(() => {
+    if (shareToken) setShareUrl(`${window.location.origin}/watch/${shareToken}`)
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function')
+  }, [shareToken])
+
+  const openShare = async () => {
+    setShareOpen(true)
+    if (!shareToken) {
+      setShareBusy(true)
+      const { data, error } = await supabase.rpc('enable_match_sharing', { p_match_id: match.id })
+      if (!error && data) setShareToken(data as string)
+      setShareBusy(false)
+    }
+  }
+  const copyShare = async () => {
+    try { await navigator.clipboard.writeText(shareUrl); setShareCopied(true); setTimeout(() => setShareCopied(false), 2000) } catch { /* clipboard unavailable */ }
+  }
+  const nativeShare = async () => {
+    const a = playerA.full_name || playerA.username
+    const b = playerB.full_name || playerB.username
+    try { await navigator.share({ title: 'Volg de wedstrijd live', text: `${a} vs ${b} — kijk live mee:`, url: shareUrl }) } catch { /* cancelled */ }
+  }
+  const stopShare = async () => {
+    setShareBusy(true)
+    await supabase.rpc('disable_match_sharing', { p_match_id: match.id })
+    setShareToken(null); setShareUrl(''); setShareOpen(false); setShareBusy(false)
+  }
+
   const matchStatus = computeMatchStatus(holeResults, match.player_a_id, match.player_b_id, totalHoles)
 
   // ── Realtime subscription ────────────────────────────────────
@@ -153,19 +190,30 @@ export function MatchScorecard({
             )}
           </div>
 
-          {/* Delete button — hidden for guests */}
-          {isAnonymous ? (
-            <span className="w-5" />
-          ) : (
-            <button
-              onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
-              style={{ color: deleteState === 'confirm' ? 'var(--status-danger)' : 'var(--text-muted)' }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-              </svg>
-            </button>
-          )}
+          {/* Right actions: share (participants) + delete (non-guests) */}
+          <div className="flex items-center gap-3">
+            {isParticipant && (
+              <button
+                onClick={openShare}
+                title="Deel kijklink"
+                style={{ color: shareOpen || shareToken ? 'var(--accent)' : 'var(--text-muted)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                </svg>
+              </button>
+            )}
+            {!isAnonymous && (
+              <button
+                onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
+                style={{ color: deleteState === 'confirm' ? 'var(--status-danger)' : 'var(--text-muted)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Delete confirmation bar */}
@@ -193,6 +241,42 @@ export function MatchScorecard({
                 </button>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* Share panel */}
+        {shareOpen && (
+          <div
+            className="max-w-lg mx-auto rounded-xl mb-2 px-4 py-3"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Kijklink delen</p>
+              <button onClick={() => setShareOpen(false)} className="text-xs" style={{ color: 'var(--text-muted)' }}>Sluiten</button>
+            </div>
+            {shareBusy && !shareToken ? (
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Link aanmaken…</p>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
+                  <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'var(--text-secondary)' }}>{shareUrl}</span>
+                  <button onClick={copyShare} className="text-sm font-semibold shrink-0" style={{ color: 'var(--accent)' }}>
+                    {shareCopied ? 'Gekopieerd!' : 'Kopieer'}
+                  </button>
+                </div>
+                <div className="flex items-center gap-4">
+                  {canShare && (
+                    <button onClick={nativeShare} className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>Deel…</button>
+                  )}
+                  <button onClick={stopShare} disabled={shareBusy} className="text-sm font-medium disabled:opacity-60" style={{ color: 'var(--status-danger)' }}>
+                    Stop met delen
+                  </button>
+                </div>
+                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                  Iedereen met deze link kijkt live mee, maar kan niets aanpassen.
+                </p>
+              </>
+            )}
           </div>
         )}
 

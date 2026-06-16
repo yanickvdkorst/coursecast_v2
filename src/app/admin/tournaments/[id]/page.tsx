@@ -23,7 +23,7 @@ export default async function AdminTournamentDetailPage({ params }: Props) {
 
   const [{ data: tpData }, { data: allPlayers }] = await Promise.all([
     supabase.from('tournament_players').select('player_id, seed').eq('tournament_id', id).order('seed', { ascending: true }),
-    supabase.from('profiles').select('id, username, full_name').order('full_name', { ascending: true }),
+    supabase.from('profiles').select('id, username, full_name').eq('is_guest', false).order('full_name', { ascending: true }),
   ])
 
   const tp = tpData ?? []

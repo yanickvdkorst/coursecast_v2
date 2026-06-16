@@ -251,6 +251,7 @@ export type Database = {
           player_b_id: string
           result_summary: string | null
           round: number | null
+          share_token: string | null
           started_at: string | null
           status: string
           tournament_id: string | null
@@ -266,6 +267,7 @@ export type Database = {
           player_b_id: string
           result_summary?: string | null
           round?: number | null
+          share_token?: string | null
           started_at?: string | null
           status?: string
           tournament_id?: string | null
@@ -281,6 +283,7 @@ export type Database = {
           player_b_id?: string
           result_summary?: string | null
           round?: number | null
+          share_token?: string | null
           started_at?: string | null
           status?: string
           tournament_id?: string | null
@@ -339,6 +342,7 @@ export type Database = {
           golf_club: string | null
           handicap: number | null
           id: string
+          is_guest: boolean
           role: string
           theme: string
           username: string
@@ -350,6 +354,7 @@ export type Database = {
           golf_club?: string | null
           handicap?: number | null
           id: string
+          is_guest?: boolean
           role?: string
           theme?: string
           username: string
@@ -361,6 +366,7 @@ export type Database = {
           golf_club?: string | null
           handicap?: number | null
           id?: string
+          is_guest?: boolean
           role?: string
           theme?: string
           username?: string
@@ -474,6 +480,9 @@ export type Database = {
       create_guest_invite: { Args: { p_course_id?: string | null }; Returns: Json }
       lookup_guest_invite: { Args: { p_code: string }; Returns: Json }
       join_guest_match: { Args: { p_code: string; p_guest_name: string }; Returns: string }
+      enable_match_sharing: { Args: { p_match_id: string }; Returns: string }
+      disable_match_sharing: { Args: { p_match_id: string }; Returns: undefined }
+      get_shared_match: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

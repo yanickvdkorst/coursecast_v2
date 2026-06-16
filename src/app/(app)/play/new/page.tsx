@@ -32,6 +32,7 @@ export default async function NewPlayPage() {
     .from('profiles')
     .select('id, username, full_name, avatar_url')
     .neq('id', user.id)
+    .eq('is_guest', false)
     .order('username')
   const allPlayers = (allPlayersData ?? []) as Profile[]
 

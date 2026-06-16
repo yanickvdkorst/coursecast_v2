@@ -11,6 +11,7 @@ export default async function NewAdminTournamentPage() {
   const { data: players } = await supabase
     .from('profiles')
     .select('id, username, full_name')
+    .eq('is_guest', false)
     .order('full_name', { ascending: true })
 
   return (

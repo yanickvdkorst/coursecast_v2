@@ -25,7 +25,7 @@ export function GuestUpgradeForm({ initialName }: { initialName: string }) {
     // 1. Claim a real username + name on the profile (validates uniqueness).
     const { error: pErr } = await supabase
       .from('profiles')
-      .update({ username, full_name: fullName })
+      .update({ username, full_name: fullName, is_guest: false })
       .eq('id', user.id)
     if (pErr) {
       setError(pErr.message.includes('duplicate') || pErr.code === '23505'

@@ -30,6 +30,7 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
         .select('id, username, full_name, avatar_url')
         .ilike('username', `%${query.trim()}%`)
         .neq('id', currentUserId)
+        .eq('is_guest', false)
         .limit(8)
       setResults((data ?? []) as Profile[])
       setLoading(false)

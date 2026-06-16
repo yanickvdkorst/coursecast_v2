@@ -23,7 +23,7 @@ export default async function AdminCompetitionDetailPage({ params }: Props) {
 
   const [{ data: cpData }, { data: allPlayers }] = await Promise.all([
     supabase.from('competition_players').select('player_id, wins, draws, losses').eq('competition_id', id),
-    supabase.from('profiles').select('id, username, full_name').order('full_name', { ascending: true }),
+    supabase.from('profiles').select('id, username, full_name').eq('is_guest', false).order('full_name', { ascending: true }),
   ])
 
   const cp = cpData ?? []

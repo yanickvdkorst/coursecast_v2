@@ -32,6 +32,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password' ||
     pathname === '/join' ||
+    pathname.startsWith('/watch/') ||
     pathname.startsWith('/auth/')
 
   // Unauthenticated → sign-in
@@ -55,6 +56,7 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/matches') ||
       pathname.startsWith('/guest') ||
       pathname === '/join' ||
+      pathname.startsWith('/watch/') ||
       pathname.startsWith('/auth/')
     if (!allowed) {
       const url = request.nextUrl.clone()

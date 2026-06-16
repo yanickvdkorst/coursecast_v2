@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { createLocalGuestMatch } from './actions'
 import type { Profile, Course } from '@/types/match'
 
 type GameFormat = 'match' | 'series' | 'tournament'
@@ -51,6 +52,8 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
   const router = useRouter()
   const [format, setFormat] = useState<GameFormat>('match')
   const [opponentMode, setOpponentMode] = useState<'registered' | 'guest'>('registered')
+  const [guestKind, setGuestKind] = useState<'local' | 'remote'>('local')
+  const [guestName, setGuestName] = useState('')
   const [search, setSearch] = useState('')
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([])
   const [name, setName] = useState('')
@@ -84,14 +87,17 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
   const isGuestMatch = format === 'match' && opponentMode === 'guest'
 
   const isValid = isGuestMatch
-    ? true
+    ? (guestKind === 'local' ? guestName.trim().length > 0 : true)
     : selectedPlayers.length >= minPlayers &&
       (!requiresName || name.trim().length > 0) &&
       (!requiresDates || (startDate && endDate))
 
   const submitLabel = (() => {
     if (loading) return 'Bezig…'
-    if (isGuestMatch) return 'Gast uitnodigen'
+    if (isGuestMatch) {
+      if (guestKind === 'remote') return 'Gast uitnodigen'
+      return guestName.trim() ? 'Start wedstrijd' : 'Vul de naam in'
+    }
     if (selectedPlayers.length < minPlayers) return format === 'match' ? 'Kies een tegenstander' : `Kies minimaal ${minPlayers} ${minPlayers === 1 ? 'speler' : 'spelers'}`
     if (requiresName && !name.trim()) return 'Geef het een naam'
     if (requiresDates && (!startDate || !endDate)) return 'Vul start- en einddatum in'
@@ -106,9 +112,19 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
     setError(null)
     const supabase = getSupabaseBrowserClient()
 
-    // Guest match → create an invite with a join code, then show the host
-    // waiting screen. The match itself is created once the guest joins.
     if (isGuestMatch) {
+      // Local guest → create the match on this device (server action redirects).
+      if (guestKind === 'local') {
+        try {
+          await createLocalGuestMatch(guestName, courseId || null)
+        } catch (e) {
+          setError(e instanceof Error ? e.message : 'Kon wedstrijd niet aanmaken')
+          setLoading(false)
+        }
+        return
+      }
+      // Remote guest → create an invite with a join code, then show the host
+      // waiting screen. The match itself is created once the guest joins.
       const { data, error: e } = await supabase.rpc('create_guest_invite', { p_course_id: courseId || null })
       const invite = data as { invite_id: string; code: string } | null
       if (e || !invite) {
@@ -317,11 +333,55 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
         )}
 
         {isGuestMatch ? (
-          <div className="px-4 py-3 rounded-xl border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Je krijgt een deelbare link met code. Je gast opent &apos;m op zijn eigen telefoon, vult zijn naam in,
-              en speelt direct mee. Geen account nodig.
-            </p>
+          <div className="space-y-3">
+            {/* Local (this device) vs remote (own phone) */}
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: 'local', label: 'Lokaal' },
+                { value: 'remote', label: 'Online' },
+              ] as const).map(o => {
+                const active = guestKind === o.value
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setGuestKind(o.value)}
+                    className="py-2.5 rounded-xl border text-sm font-semibold transition-colors"
+                    style={
+                      active
+                        ? { background: 'var(--accent)', color: 'var(--on-accent)', borderColor: 'transparent' }
+                        : { background: 'var(--bg-card)', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }
+                    }
+                  >
+                    {o.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {guestKind === 'local' ? (
+              <div>
+                <input
+                  type="text"
+                  placeholder="Naam van je gast"
+                  value={guestName}
+                  onChange={e => setGuestName(e.target.value)}
+                  className={inputClass}
+                  style={inputStyle}
+                  autoComplete="off"
+                />
+                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                  Je speelt en scoort op je eigen telefoon. Je tegenstander hoeft niets te doen.
+                </p>
+              </div>
+            ) : (
+              <div className="px-4 py-3 rounded-xl border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  Je krijgt een deelbare link met code. Je gast opent &apos;m op zijn eigen telefoon, vult zijn naam in,
+                  en speelt live mee. Geen account nodig.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
         <>
