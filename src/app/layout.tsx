@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { PwaRegister } from '@/components/pwa/PwaRegister'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider initialTheme={initialTheme}>
           {children}
         </ThemeProvider>
+        <PwaRegister />
       </body>
     </html>
   )

@@ -1,4 +1,5 @@
 import { BottomNav } from '@/components/layout/BottomNav'
+import { InstallPrompt } from '@/components/pwa/InstallPrompt'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -6,6 +7,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 pb-24">
         {children}
       </main>
+      <InstallPrompt />
       <BottomNav />
     </div>
   )
