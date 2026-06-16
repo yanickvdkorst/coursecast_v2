@@ -73,7 +73,13 @@ export function InstallPrompt() {
           </p>
           {isIOS ? (
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              Tik op Deel <span aria-hidden>􀈂</span> en kies &ldquo;Zet op beginscherm&rdquo;.
+              Tik op Deel
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="inline-block w-3.5 h-3.5 mx-1 align-text-bottom" aria-hidden>
+                <path d="M12 15V4" />
+                <path d="M8.5 7.5 12 4l3.5 3.5" />
+                <path d="M7 11H5.5A1.5 1.5 0 0 0 4 12.5v6A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 18.5 11H17" />
+              </svg>
+              en kies &ldquo;Zet op beginscherm&rdquo;.
             </p>
           ) : (
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>

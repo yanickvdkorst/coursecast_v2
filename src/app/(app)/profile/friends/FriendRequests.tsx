@@ -13,29 +13,28 @@ interface Request {
 export function FriendRequests({ requests }: { requests: Request[] }) {
   const router = useRouter()
   const [acting, setActing] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const respond = async (friendshipId: string, accept: boolean) => {
     setActing(friendshipId)
+    setError(null)
     const supabase = getSupabaseBrowserClient()
 
-    if (accept) {
-      await supabase
-        .from('friendships')
-        .update({ status: 'accepted' })
-        .eq('id', friendshipId)
-    } else {
-      await supabase
-        .from('friendships')
-        .delete()
-        .eq('id', friendshipId)
-    }
+    const { error: err } = accept
+      ? await supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId)
+      : await supabase.from('friendships').delete().eq('id', friendshipId)
 
     setActing(null)
+    if (err) {
+      setError('Er ging iets mis. Probeer het opnieuw.')
+      return
+    }
     router.refresh()
   }
 
   return (
     <div className="space-y-2">
+      {error && <p className="text-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
       {requests.map(req => (
         <div
           key={req.friendshipId}

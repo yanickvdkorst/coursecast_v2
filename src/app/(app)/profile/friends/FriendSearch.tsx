@@ -16,6 +16,8 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
   const [results, setResults] = useState<Profile[]>([])
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState<string | null>(null)
+  const [sent, setSent] = useState<Set<string>>(new Set())
+  const [error, setError] = useState<string | null>(null)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -39,12 +41,18 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
 
   const sendRequest = async (addresseeId: string) => {
     setSending(addresseeId)
+    setError(null)
     const supabase = getSupabaseBrowserClient()
-    await supabase.from('friendships').insert({
+    const { error: err } = await supabase.from('friendships').insert({
       requester_id: currentUserId,
       addressee_id: addresseeId,
     })
     setSending(null)
+    if (err) {
+      setError('Kon verzoek niet versturen — mogelijk al verstuurd.')
+      return
+    }
+    setSent(prev => new Set(prev).add(addresseeId))
     router.refresh()
   }
 
@@ -67,10 +75,15 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
         <p className="text-sm text-center py-2" style={{ color: 'var(--text-muted)' }}>Zoeken…</p>
       )}
 
+      {error && (
+        <p className="text-sm py-1" style={{ color: 'var(--status-danger)' }}>{error}</p>
+      )}
+
       {results.length > 0 && (
         <div className="space-y-2">
           {results.map(player => {
             const alreadyAdded = existingFriendIds.includes(player.id)
+            const isSent = sent.has(player.id)
             return (
               <div
                 key={player.id}
@@ -91,14 +104,14 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
                 </div>
                 <button
                   onClick={() => sendRequest(player.id)}
-                  disabled={alreadyAdded || sending === player.id}
+                  disabled={alreadyAdded || isSent || sending === player.id}
                   className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity disabled:opacity-50"
                   style={{
-                    background: alreadyAdded ? 'var(--bg-secondary)' : 'var(--color-gold-500)',
-                    color: alreadyAdded ? 'var(--text-muted)' : 'var(--on-accent)',
+                    background: alreadyAdded || isSent ? 'var(--bg-secondary)' : 'var(--color-gold-500)',
+                    color: alreadyAdded || isSent ? 'var(--text-muted)' : 'var(--on-accent)',
                   }}
                 >
-                  {alreadyAdded ? 'Toegevoegd' : sending === player.id ? '…' : 'Toevoegen'}
+                  {alreadyAdded ? 'Toegevoegd' : isSent ? 'Verstuurd' : sending === player.id ? '…' : 'Toevoegen'}
                 </button>
               </div>
             )

@@ -20,10 +20,14 @@ export function SignInForm() {
 
     const supabase = getSupabaseBrowserClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setError(error.message)
-    else router.push('/dashboard')
-
-    setLoading(false)
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+    // Keep the button in its loading state until the dashboard navigation
+    // completes — avoids a dead, re-clickable gap after a successful login.
+    router.push('/dashboard')
   }
 
   return (
@@ -48,6 +52,7 @@ export function SignInForm() {
           }}
           placeholder="jij@voorbeeld.nl"
           autoComplete="email"
+          autoFocus
         />
       </div>
 

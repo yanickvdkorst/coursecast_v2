@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useFormStatus } from 'react-dom'
 import { BackButton } from '@/components/ui/BackButton'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { computeMatchStatus, getHoleResult } from '@/lib/matchplay/scoring'
@@ -232,13 +233,7 @@ export function MatchScorecard({
                 Annuleer
               </button>
               <form action={deleteMatch.bind(null, match.id)}>
-                <button
-                  type="submit"
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                  style={{ background: 'var(--btn-danger)', color: 'var(--on-btn)' }}
-                >
-                  Verwijder
-                </button>
+                <DeleteSubmitButton />
               </form>
             </div>
           </div>
@@ -327,6 +322,22 @@ export function MatchScorecard({
         ))}
       </div>
     </div>
+  )
+}
+
+// ── DeleteSubmitButton ───────────────────────────────────────
+// Uses form status so the delete button shows pending + can't double-submit.
+function DeleteSubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-60"
+      style={{ background: 'var(--btn-danger)', color: 'var(--on-btn)' }}
+    >
+      {pending ? 'Verwijderen…' : 'Verwijder'}
+    </button>
   )
 }
 
