@@ -9,7 +9,6 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 export const metadata: Metadata = {
   title: 'Coursecast',
   description: 'Golf matchplay scoring — real-time, mobile-first',
-  manifest: '/manifest.json',
 }
 
 export const viewport: Viewport = {
