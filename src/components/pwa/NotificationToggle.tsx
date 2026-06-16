@@ -1,87 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { savePushSubscription, deletePushSubscription } from '@/app/(app)/profile/push-actions'
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(base64)
-  const out = new Uint8Array(raw.length)
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i)
-  return out
-}
+import { usePush } from './usePush'
 
 export function NotificationToggle() {
-  const [supported, setSupported] = useState<boolean | null>(null)
-  const [subscribed, setSubscribed] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [needsInstall, setNeedsInstall] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const ok = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
-    if (!ok) { setSupported(false); return }
-    setSupported(true)
-
-    // iOS only delivers web push to an installed (home-screen) PWA.
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true
-    if (isIOS && !standalone) setNeedsInstall(true)
-
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setSubscribed(!!sub))
-      .catch(() => {})
-  }, [])
-
-  const enable = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      const perm = await Notification.requestPermission()
-      if (perm !== 'granted') {
-        setError('Meldingen zijn geblokkeerd. Sta ze toe in je browserinstellingen.')
-        setBusy(false)
-        return
-      }
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
-      })
-      const json = sub.toJSON()
-      const res = await savePushSubscription({
-        endpoint: sub.endpoint,
-        p256dh: json.keys!.p256dh,
-        auth: json.keys!.auth,
-      })
-      if (!res.ok) throw new Error('save failed')
-      setSubscribed(true)
-    } catch {
-      setError('Kon meldingen niet inschakelen.')
-    }
-    setBusy(false)
-  }
-
-  const disable = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      if (sub) {
-        await deletePushSubscription(sub.endpoint)
-        await sub.unsubscribe()
-      }
-      setSubscribed(false)
-    } catch {
-      setError('Kon meldingen niet uitschakelen.')
-    }
-    setBusy(false)
-  }
+  const { supported, subscribed, needsInstall, busy, error, enable, disable } = usePush()
 
   if (supported === null) return null
   if (!supported) {

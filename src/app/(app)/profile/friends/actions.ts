@@ -29,3 +29,39 @@ export async function sendFriendRequest(addresseeId: string) {
 
   return { ok: true }
 }
+
+export async function respondToFriendRequest(friendshipId: string, accept: boolean) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  if (!accept) {
+    const { error } = await supabase.from('friendships').delete().eq('id', friendshipId)
+    return { ok: !error }
+  }
+
+  // Accept → notify the original requester.
+  const { data: row, error } = await supabase
+    .from('friendships')
+    .update({ status: 'accepted' })
+    .eq('id', friendshipId)
+    .select('requester_id')
+    .single()
+  if (error || !row) return { ok: false, error: error?.message }
+
+  const { data: me } = await supabase
+    .from('profiles')
+    .select('full_name, username')
+    .eq('id', user.id)
+    .single()
+  const name = me?.full_name?.trim() || me?.username || 'Iemand'
+
+  await sendPushToUser(row.requester_id, {
+    title: 'Vriendverzoek geaccepteerd',
+    body: `${name} is nu je vriend`,
+    url: '/profile/friends',
+    tag: `friend-accept-${friendshipId}`,
+  }).catch(() => {})
+
+  return { ok: true }
+}

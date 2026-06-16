@@ -1,5 +1,6 @@
 import { BottomNav } from '@/components/layout/BottomNav'
 import { InstallPrompt } from '@/components/pwa/InstallPrompt'
+import { NotificationNudge } from '@/components/pwa/NotificationNudge'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <InstallPrompt />
+      <NotificationNudge />
       <BottomNav />
     </div>
   )

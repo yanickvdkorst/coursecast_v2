@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { respondToFriendRequest } from './actions'
 import type { Profile } from '@/types/match'
 
 interface Request {
@@ -18,14 +18,11 @@ export function FriendRequests({ requests }: { requests: Request[] }) {
   const respond = async (friendshipId: string, accept: boolean) => {
     setActing(friendshipId)
     setError(null)
-    const supabase = getSupabaseBrowserClient()
 
-    const { error: err } = accept
-      ? await supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId)
-      : await supabase.from('friendships').delete().eq('id', friendshipId)
+    const res = await respondToFriendRequest(friendshipId, accept)
 
     setActing(null)
-    if (err) {
+    if (!res.ok) {
       setError('Er ging iets mis. Probeer het opnieuw.')
       return
     }
