@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { sendFriendRequest } from './actions'
 import type { Profile } from '@/types/match'
 
 interface Props {
@@ -42,13 +43,9 @@ export function FriendSearch({ currentUserId, existingFriendIds }: Props) {
   const sendRequest = async (addresseeId: string) => {
     setSending(addresseeId)
     setError(null)
-    const supabase = getSupabaseBrowserClient()
-    const { error: err } = await supabase.from('friendships').insert({
-      requester_id: currentUserId,
-      addressee_id: addresseeId,
-    })
+    const res = await sendFriendRequest(addresseeId)
     setSending(null)
-    if (err) {
+    if (!res.ok) {
       setError('Kon verzoek niet versturen — mogelijk al verstuurd.')
       return
     }

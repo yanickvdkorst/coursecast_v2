@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { SignOutButton } from '@/components/auth/SignOutButton'
+import { NotificationToggle } from '@/components/pwa/NotificationToggle'
 import Link from 'next/link'
 
 export default async function ProfilePage() {
@@ -114,6 +115,10 @@ export default async function ProfilePage() {
           </div>
           <ThemeToggle />
         </div>
+      </div>
+
+      <div className="mb-6">
+        <NotificationToggle />
       </div>
 
       <SignOutButton />

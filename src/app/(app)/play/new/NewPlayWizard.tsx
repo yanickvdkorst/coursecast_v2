@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
-import { createLocalGuestMatch } from './actions'
+import { createLocalGuestMatch, createDirectMatch } from './actions'
 import type { Profile, Course } from '@/types/match'
 
 type GameFormat = 'match' | 'series' | 'tournament'
@@ -137,22 +137,13 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
     }
 
     if (format === 'match') {
-      const { data, error: e } = await supabase
-        .from('matches')
-        .insert({
-          player_a_id: currentUserId,
-          player_b_id: selectedPlayers[0],
-          course_id: courseId || null,
-          status: 'pending',
-        })
-        .select('id')
-        .single()
-      if (e || !data) {
-        setError(e?.message ?? 'Kon wedstrijd niet aanmaken')
+      try {
+        const matchId = await createDirectMatch(selectedPlayers[0], courseId || null)
+        router.push(`/matches/${matchId}`)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Kon wedstrijd niet aanmaken')
         setLoading(false)
-        return
       }
-      router.push(`/matches/${data.id}`)
       return
     }
 

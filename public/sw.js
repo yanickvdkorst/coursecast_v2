@@ -71,7 +71,7 @@ self.addEventListener('push', (event) => {
       badge: '/icon-192.png',
       tag: data.tag,
       renotify: !!data.tag,
-      data: data.data || {},
+      data: { url: data.url, ...(data.data || {}) },
     })
   )
 })
