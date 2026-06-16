@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Golf matchplay scoring',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0a6135',
-    theme_color: '#0a6135',
+    background_color: '#000000',
+    theme_color: '#000000',
     icons: [
       { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
