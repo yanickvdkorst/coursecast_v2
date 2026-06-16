@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      guest_invites: {
+        Row: {
+          code: string
+          course_id: string | null
+          created_at: string
+          guest_id: string | null
+          host_id: string
+          id: string
+          match_id: string | null
+          status: string
+        }
+        Insert: {
+          code: string
+          course_id?: string | null
+          created_at?: string
+          guest_id?: string | null
+          host_id: string
+          id?: string
+          match_id?: string | null
+          status?: string
+        }
+        Update: {
+          code?: string
+          course_id?: string | null
+          created_at?: string
+          guest_id?: string | null
+          host_id?: string
+          id?: string
+          match_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       competition_players: {
         Row: {
           competition_id: string
@@ -438,6 +471,9 @@ export type Database = {
         Args: { p_match_id: string; p_user_id: string }
         Returns: Json
       }
+      create_guest_invite: { Args: { p_course_id?: string | null }; Returns: Json }
+      lookup_guest_invite: { Args: { p_code: string }; Returns: Json }
+      join_guest_match: { Args: { p_code: string; p_guest_name: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

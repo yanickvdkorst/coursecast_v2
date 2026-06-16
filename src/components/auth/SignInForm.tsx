@@ -139,6 +139,13 @@ export function SignInForm() {
           Registreer
         </Link>
       </p>
+
+      <p className="text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+        Uitgenodigd als gast?{' '}
+        <Link href="/join" className="font-medium" style={{ color: 'var(--color-gold-500)' }}>
+          Doe mee met een code
+        </Link>
+      </p>
     </form>
   )
 }

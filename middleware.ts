@@ -31,6 +31,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/sign-up' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password' ||
+    pathname === '/join' ||
     pathname.startsWith('/auth/')
 
   // Unauthenticated → sign-in
@@ -41,10 +42,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // Authenticated on sign-in/up → dashboard
-  if (user && (pathname === '/sign-in' || pathname === '/sign-up')) {
+  if (user && !user.is_anonymous && (pathname === '/sign-in' || pathname === '/sign-up')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Guest (anonymous) users can only reach their match, the join flow, and the
+  // upgrade page — everything else funnels them to create a real account.
+  if (user?.is_anonymous) {
+    const allowed =
+      pathname.startsWith('/matches') ||
+      pathname.startsWith('/guest') ||
+      pathname === '/join' ||
+      pathname.startsWith('/auth/')
+    if (!allowed) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/guest/upgrade'
+      return NextResponse.redirect(url)
+    }
   }
 
   // Admin-only routes — single DB call, only for /admin/*

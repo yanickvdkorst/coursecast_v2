@@ -50,6 +50,7 @@ const FORMAT_OPTIONS: { value: GameFormat; title: string; description: string; i
 export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: Props) {
   const router = useRouter()
   const [format, setFormat] = useState<GameFormat>('match')
+  const [opponentMode, setOpponentMode] = useState<'registered' | 'guest'>('registered')
   const [search, setSearch] = useState('')
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([])
   const [name, setName] = useState('')
@@ -80,14 +81,17 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
   const minPlayers = format === 'match' ? 1 : format === 'series' ? 1 : 2
   const requiresName = format !== 'match'
   const requiresDates = format === 'tournament'
+  const isGuestMatch = format === 'match' && opponentMode === 'guest'
 
-  const isValid =
-    selectedPlayers.length >= minPlayers &&
-    (!requiresName || name.trim().length > 0) &&
-    (!requiresDates || (startDate && endDate))
+  const isValid = isGuestMatch
+    ? true
+    : selectedPlayers.length >= minPlayers &&
+      (!requiresName || name.trim().length > 0) &&
+      (!requiresDates || (startDate && endDate))
 
   const submitLabel = (() => {
     if (loading) return 'Bezig…'
+    if (isGuestMatch) return 'Gast uitnodigen'
     if (selectedPlayers.length < minPlayers) return format === 'match' ? 'Kies een tegenstander' : `Kies minimaal ${minPlayers} ${minPlayers === 1 ? 'speler' : 'spelers'}`
     if (requiresName && !name.trim()) return 'Geef het een naam'
     if (requiresDates && (!startDate || !endDate)) return 'Vul start- en einddatum in'
@@ -101,6 +105,20 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
     setLoading(true)
     setError(null)
     const supabase = getSupabaseBrowserClient()
+
+    // Guest match → create an invite with a join code, then show the host
+    // waiting screen. The match itself is created once the guest joins.
+    if (isGuestMatch) {
+      const { data, error: e } = await supabase.rpc('create_guest_invite', { p_course_id: courseId || null })
+      const invite = data as { invite_id: string; code: string } | null
+      if (e || !invite) {
+        setError(e?.message ?? 'Kon gast-uitnodiging niet aanmaken')
+        setLoading(false)
+        return
+      }
+      router.push(`/play/guest/${invite.invite_id}`)
+      return
+    }
 
     if (format === 'match') {
       const { data, error: e } = await supabase
@@ -188,7 +206,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => { setFormat(opt.value); setSelectedPlayers([]) }}
+                onClick={() => { setFormat(opt.value); setSelectedPlayers([]); setOpponentMode('registered') }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border text-left transition-colors"
                 style={{
                   background: active ? 'var(--accent-soft)' : 'var(--bg-card)',
@@ -270,6 +288,43 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
         <Label>
           {format === 'match' ? 'Tegen wie?' : 'Speel tegen'}
         </Label>
+
+        {/* Registered vs guest toggle (match only) */}
+        {format === 'match' && (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {([
+              { value: 'registered', label: 'Speler' },
+              { value: 'guest', label: 'Gast' },
+            ] as const).map(o => {
+              const active = opponentMode === o.value
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => { setOpponentMode(o.value); setSelectedPlayers([]) }}
+                  className="py-2.5 rounded-xl border text-sm font-semibold transition-colors"
+                  style={
+                    active
+                      ? { background: 'var(--accent)', color: 'var(--on-accent)', borderColor: 'transparent' }
+                      : { background: 'var(--bg-card)', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }
+                  }
+                >
+                  {o.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {isGuestMatch ? (
+          <div className="px-4 py-3 rounded-xl border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Je krijgt een deelbare link met code. Je gast opent &apos;m op zijn eigen telefoon, vult zijn naam in,
+              en speelt direct mee. Geen account nodig.
+            </p>
+          </div>
+        ) : (
+        <>
         {format === 'match' && (
           <input
             type="text"
@@ -319,6 +374,8 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
               )
             })}
           </div>
+        )}
+        </>
         )}
       </section>
 

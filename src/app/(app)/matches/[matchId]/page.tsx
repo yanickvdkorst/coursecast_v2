@@ -73,6 +73,7 @@ export default async function MatchPage({ params }: Props) {
       initialHoleResults={holeResults}
       currentUserId={user.id}
       totalHoles={totalHoles}
+      isAnonymous={!!user.is_anonymous}
     />
   )
 }

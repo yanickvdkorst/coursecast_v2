@@ -16,6 +16,7 @@ interface Props {
   initialHoleResults: HoleResult[]
   currentUserId: string
   totalHoles: number
+  isAnonymous?: boolean
 }
 
 type ScoringResult = 'player_a' | 'player_b' | 'halved'
@@ -28,6 +29,7 @@ export function MatchScorecard({
   initialHoleResults,
   currentUserId,
   totalHoles,
+  isAnonymous = false,
 }: Props) {
   const [holeResults, setHoleResults] = useState<HoleResult[]>(initialHoleResults)
   const [savingHole, setSavingHole] = useState<number | null>(null)
@@ -151,15 +153,19 @@ export function MatchScorecard({
             )}
           </div>
 
-          {/* Delete button */}
-          <button
-            onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
-            style={{ color: deleteState === 'confirm' ? 'var(--status-danger)' : 'var(--text-muted)' }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-            </svg>
-          </button>
+          {/* Delete button — hidden for guests */}
+          {isAnonymous ? (
+            <span className="w-5" />
+          ) : (
+            <button
+              onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
+              style={{ color: deleteState === 'confirm' ? 'var(--status-danger)' : 'var(--text-muted)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Delete confirmation bar */}
@@ -200,6 +206,25 @@ export function MatchScorecard({
           />
         </div>
       </header>
+
+      {/* Guest banner — prompt to create an account */}
+      {isAnonymous && (
+        <div className="max-w-lg mx-auto w-full px-4 pt-3">
+          <a
+            href="/guest/upgrade"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl"
+            style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent)' }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Je speelt als gast</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                Maak een account om deze wedstrijd te bewaren
+              </p>
+            </div>
+            <span className="text-sm font-semibold shrink-0" style={{ color: 'var(--accent)' }}>Account maken →</span>
+          </a>
+        </div>
+      )}
 
       {/* ── Hole list ── */}
       <div className="flex-1 overflow-y-auto pb-32 max-w-lg mx-auto w-full">
