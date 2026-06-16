@@ -7,7 +7,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
 export const metadata: Metadata = {
-  title: 'MatchPlay',
+  title: 'Coursecast',
   description: 'Golf matchplay scoring — real-time, mobile-first',
   manifest: '/manifest.json',
 }

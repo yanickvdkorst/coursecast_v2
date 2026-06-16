@@ -23,9 +23,15 @@ export function AdminSidebar() {
     >
       <div className="mb-8 px-2">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="text-2xl">⛳</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: 'var(--color-gold-500)' }}>
+            <path d="M8 20V4.5" />
+            <path d="M8 4.5l7 2.25L8 9" />
+            <path d="M5.5 20h5" />
+            <path d="M16.4 4a4.5 4.5 0 0 1 1.9 3.5" />
+            <path d="M18 2.1a7.5 7.5 0 0 1 3 5.4" />
+          </svg>
           <span className="font-bold text-lg" style={{ color: 'var(--color-gold-500)' }}>
-            MatchPlay
+            Coursecast
           </span>
         </Link>
         <p className="text-xs mt-1 ml-8" style={{ color: 'var(--text-muted)' }}>

@@ -7,15 +7,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Logo / Brand */}
       <div className="mb-8 text-center">
         <div className="flex justify-center mb-3">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-10 h-10" style={{ color: 'var(--color-gold-500)' }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l1.5 1.5M3 3h5.25M3 3v5.25M21 3l-1.5 1.5M21 3h-5.25M21 3v5.25M3 21l1.5-1.5M3 21h5.25M3 21v-5.25M21 21l-1.5-1.5M21 21h-5.25M21 21v-5.25M12 8v8M8 12h8" />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10" style={{ color: 'var(--color-gold-500)' }}>
+            {/* Golf flag (course) */}
+            <path d="M8 20V4.5" />
+            <path d="M8 4.5l7 2.25L8 9" />
+            <path d="M5.5 20h5" />
+            {/* Broadcast waves (cast) */}
+            <path d="M16.4 4a4.5 4.5 0 0 1 1.9 3.5" />
+            <path d="M18 2.1a7.5 7.5 0 0 1 3 5.4" />
           </svg>
         </div>
         <h1
           className="text-2xl font-bold tracking-tight"
           style={{ color: 'var(--color-gold-500)' }}
         >
-          MatchPlay
+          Coursecast
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
           Golf matchplay scoring
