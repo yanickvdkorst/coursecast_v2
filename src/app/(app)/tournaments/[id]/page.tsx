@@ -144,7 +144,20 @@ export default async function TournamentDetailPage({ params }: Props) {
         <span className="mx-1.5">·</span>{fmt(t.starts_at)} – {fmt(t.ends_at)}
       </p>
 
-      <TournamentShare tournamentId={id} />
+      <div className="space-y-3 mb-8">
+        <TournamentShare
+          path={`/tournaments/${id}`}
+          label="Deel inschrijflink"
+          info="Iedereen met deze link kan het toernooi bekijken en zich inschrijven."
+        />
+        {t.status !== 'draft' && (
+          <TournamentShare
+            path={`/t/${id}`}
+            label="Deel live-overzicht"
+            info="Publiek live-overzicht van alle wedstrijden — geen account nodig."
+          />
+        )}
+      </div>
 
       {/* Join / request (non-organisers, while still in draft) */}
       {!isCreator && t.status === 'draft' && (

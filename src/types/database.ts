@@ -519,6 +519,8 @@ export type Database = {
       enable_match_sharing: { Args: { p_match_id: string }; Returns: string }
       disable_match_sharing: { Args: { p_match_id: string }; Returns: undefined }
       get_shared_match: { Args: { p_token: string }; Returns: Json }
+      get_public_tournament: { Args: { p_tournament_id: string }; Returns: Json }
+      get_public_tournament_match: { Args: { p_match_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

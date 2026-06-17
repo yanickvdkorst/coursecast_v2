@@ -22,7 +22,7 @@ interface SharedMatch {
   hole_results: { hole_number: number; result: string }[]
 }
 
-export function WatchMatch({ token }: { token: string }) {
+export function WatchMatch({ token, matchId, backHref }: { token?: string; matchId?: string; backHref?: string }) {
   const supabase = getSupabaseBrowserClient()
   const [data, setData] = useState<SharedMatch | null>(null)
   const [state, setState] = useState<'loading' | 'ok' | 'notfound'>('loading')
@@ -30,7 +30,9 @@ export function WatchMatch({ token }: { token: string }) {
   useEffect(() => {
     let alive = true
     const load = async () => {
-      const { data: res, error } = await supabase.rpc('get_shared_match', { p_token: token })
+      const { data: res, error } = matchId
+        ? await supabase.rpc('get_public_tournament_match', { p_match_id: matchId })
+        : await supabase.rpc('get_shared_match', { p_token: token! })
       if (!alive) return
       if (error || !res) {
         // Keep showing existing data on a transient poll error; only flip to
@@ -45,7 +47,7 @@ export function WatchMatch({ token }: { token: string }) {
     // Poll for live updates — golf scoring changes only every few minutes.
     const poll = setInterval(load, 4000)
     return () => { alive = false; clearInterval(poll) }
-  }, [token, supabase])
+  }, [token, matchId, supabase])
 
   if (state === 'loading') {
     return (
@@ -95,6 +97,14 @@ export function WatchMatch({ token }: { token: string }) {
       {/* Header */}
       <header className="sticky top-0 z-10 px-4 pt-4 pb-3" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="max-w-lg mx-auto">
+          {backHref && (
+            <a href={backHref} className="inline-flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              Terug naar overzicht
+            </a>
+          )}
           <div className="flex items-center justify-center gap-2 mb-2">
             {isLive && (
               <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--status-success)' }}>
