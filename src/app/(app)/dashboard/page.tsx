@@ -60,7 +60,7 @@ export default async function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <NotificationBell items={notifications} />
+          <NotificationBell count={notifications.length} />
           <Link
             href="/profile"
             className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
