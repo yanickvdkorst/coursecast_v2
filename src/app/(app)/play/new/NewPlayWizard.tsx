@@ -66,14 +66,20 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const playerPool = format === 'match' ? allPlayers : friends
-
+  // Default list shows your friends; searching looks through ALL registered
+  // players (friends no longer required to play someone).
   const filteredPlayers = useMemo(() => {
-    const q = search.toLowerCase()
-    return playerPool.filter(p =>
-      p.username.toLowerCase().includes(q) || (p.full_name ?? '').toLowerCase().includes(q)
-    )
-  }, [playerPool, search])
+    const q = search.trim().toLowerCase()
+    if (q) {
+      return allPlayers.filter(p =>
+        p.username.toLowerCase().includes(q) || (p.full_name ?? '').toLowerCase().includes(q)
+      )
+    }
+    // No search → friends, plus any already-selected non-friends so picks stay visible.
+    const friendIds = new Set(friends.map(f => f.id))
+    const extraSelected = allPlayers.filter(p => selectedPlayers.includes(p.id) && !friendIds.has(p.id))
+    return [...extraSelected, ...friends]
+  }, [friends, allPlayers, search, selectedPlayers])
 
   const togglePlayer = (id: string) => {
     if (format === 'match') {
@@ -417,23 +423,21 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
           </div>
         ) : (
         <>
-        {format === 'match' && (
-          <input
-            type="text"
-            placeholder="Zoek een speler…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className={`${inputClass} mb-3`}
-            style={inputStyle}
-          />
-        )}
-        {playerPool.length === 0 ? (
+        <input
+          type="text"
+          placeholder="Zoek een speler…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className={`${inputClass} mb-3`}
+          style={inputStyle}
+        />
+        {filteredPlayers.length === 0 ? (
           <p className="text-sm py-2" style={{ color: 'var(--text-muted)' }}>
-            {format === 'match'
-              ? 'Geen andere spelers gevonden.'
+            {search.trim()
+              ? 'Geen speler gevonden.'
               : format === 'tournament'
-              ? 'Optioneel — je kunt later spelers uitnodigen of ze schrijven zich zelf in.'
-              : 'Geen vrienden gevonden. Voeg eerst vrienden toe via je profiel.'}
+              ? 'Optioneel — zoek hierboven om spelers toe te voegen, of nodig ze later uit.'
+              : 'Je hebt nog geen vrienden. Zoek hierboven om een speler te vinden.'}
           </p>
         ) : (
           <div className="space-y-2 max-h-72 overflow-y-auto">

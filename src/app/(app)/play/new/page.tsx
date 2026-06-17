@@ -25,6 +25,7 @@ export default async function NewPlayPage() {
       .from('profiles')
       .select('id, username, full_name, avatar_url')
       .in('id', friendIds)
+      .eq('is_guest', false)
     friends = (data ?? []) as Profile[]
   }
 

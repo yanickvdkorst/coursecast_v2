@@ -64,6 +64,20 @@ export default async function MatchPage({ params }: Props) {
   const totalHoles = course?.holes ?? 18
   const holeResults = (holeResultsData ?? []) as HoleResult[]
 
+  // Head-to-head record between these two players (all decided matches).
+  const { data: h2hData } = await supabase
+    .from('matches')
+    .select('winner_id')
+    .or(`and(player_a_id.eq.${match.player_a_id},player_b_id.eq.${match.player_b_id}),and(player_a_id.eq.${match.player_b_id},player_b_id.eq.${match.player_a_id})`)
+    .in('status', ['complete', 'conceded'])
+  let aWins = 0, bWins = 0, draws = 0
+  for (const m of h2hData ?? []) {
+    if (m.winner_id === match.player_a_id) aWins++
+    else if (m.winner_id === match.player_b_id) bWins++
+    else draws++
+  }
+  const h2h = { aWins, bWins, draws }
+
   return (
     <MatchScorecard
       match={match}
@@ -74,6 +88,7 @@ export default async function MatchPage({ params }: Props) {
       currentUserId={user.id}
       totalHoles={totalHoles}
       isAnonymous={!!user.is_anonymous}
+      h2h={h2h}
     />
   )
 }

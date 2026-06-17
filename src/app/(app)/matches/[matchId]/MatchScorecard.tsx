@@ -18,6 +18,7 @@ interface Props {
   currentUserId: string
   totalHoles: number
   isAnonymous?: boolean
+  h2h?: { aWins: number; bWins: number; draws: number }
 }
 
 type ScoringResult = 'player_a' | 'player_b' | 'halved'
@@ -31,6 +32,7 @@ export function MatchScorecard({
   currentUserId,
   totalHoles,
   isAnonymous = false,
+  h2h,
 }: Props) {
   const [holeResults, setHoleResults] = useState<HoleResult[]>(initialHoleResults)
   const [savingHole, setSavingHole] = useState<number | null>(null)
@@ -188,6 +190,11 @@ export function MatchScorecard({
             </div>
             {course && (
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{course.name}</p>
+            )}
+            {h2h && h2h.aWins + h2h.bWins + h2h.draws > 0 && (
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                Onderling {h2h.aWins}–{h2h.bWins}{h2h.draws > 0 ? ` · ${h2h.draws} gelijk` : ''}
+              </p>
             )}
           </div>
 
