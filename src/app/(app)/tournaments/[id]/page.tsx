@@ -9,6 +9,8 @@ import { TournamentRequests } from './TournamentRequests'
 import { TournamentShare } from './TournamentShare'
 import { TournamentDelete } from './TournamentDelete'
 import { TournamentEnd } from './TournamentEnd'
+import { TournamentInvite } from './TournamentInvite'
+import { TournamentInvitedList } from './TournamentInvitedList'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -37,7 +39,8 @@ export default async function TournamentDetailPage({ params }: Props) {
 
   const acceptedPlayers = tPlayers.filter(tp => tp.status === 'accepted')
   const requestedPlayers = tPlayers.filter(tp => tp.status === 'requested')
-  const myStatus = (tPlayers.find(tp => tp.player_id === user.id)?.status ?? 'none') as 'none' | 'requested' | 'accepted'
+  const invitedPlayers = tPlayers.filter(tp => tp.status === 'invited')
+  const myStatus = (tPlayers.find(tp => tp.player_id === user.id)?.status ?? 'none') as 'none' | 'requested' | 'accepted' | 'invited'
 
   const allMemberIds = tPlayers.map(tp => tp.player_id)
   const playerIds = acceptedPlayers.map(tp => tp.player_id) // accepted only — used for standings/matches
@@ -59,6 +62,22 @@ export default async function TournamentDetailPage({ params }: Props) {
     playerId: tp.player_id,
     name: profileMap[tp.player_id]?.full_name || profileMap[tp.player_id]?.username || '—',
   }))
+  const invitedProfiles = invitedPlayers.map(tp => ({
+    playerId: tp.player_id,
+    name: profileMap[tp.player_id]?.full_name || profileMap[tp.player_id]?.username || '—',
+  }))
+
+  // Registered players the organiser can still invite (non-guest, not yet a member).
+  let inviteCandidates: { id: string; username: string; full_name: string | null }[] = []
+  if (isCreator && t.status === 'draft') {
+    const memberIds = new Set(allMemberIds)
+    const { data: allProfiles } = await supabase
+      .from('profiles')
+      .select('id, username, full_name')
+      .eq('is_guest', false)
+      .order('full_name', { ascending: true })
+    inviteCandidates = (allProfiles ?? []).filter(p => p.id !== user.id && !memberIds.has(p.id))
+  }
 
   const fmt = (d: string | null) =>
     d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -145,11 +164,13 @@ export default async function TournamentDetailPage({ params }: Props) {
       </p>
 
       <div className="space-y-3 mb-8">
-        <TournamentShare
-          path={`/tournaments/${id}`}
-          label="Deel inschrijflink"
-          info="Iedereen met deze link kan het toernooi bekijken en zich inschrijven."
-        />
+        {t.status === 'draft' && (
+          <TournamentShare
+            path={`/tournaments/${id}`}
+            label="Deel inschrijflink"
+            info="Iedereen met deze link kan het toernooi bekijken en zich inschrijven."
+          />
+        )}
         {t.status !== 'draft' && (
           <TournamentShare
             path={`/t/${id}`}
@@ -172,6 +193,10 @@ export default async function TournamentDetailPage({ params }: Props) {
 
       {/* Organiser: pending join requests */}
       {isCreator && <TournamentRequests tournamentId={id} requests={requestProfiles} />}
+
+      {/* Organiser: outstanding invites + invite new players (draft only) */}
+      {isCreator && <TournamentInvitedList tournamentId={id} invited={invitedProfiles} />}
+      {isCreator && t.status === 'draft' && <TournamentInvite tournamentId={id} players={inviteCandidates} />}
 
       {/* Round-robin standings */}
       {t.format === 'round_robin' && t.status !== 'draft' && playerIds.length > 0 && (

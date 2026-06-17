@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { requestToJoin, leaveTournament } from './actions'
+import { requestToJoin, leaveTournament, respondToInvite } from './actions'
 
 interface Props {
   tournamentId: string
   visibility: string
-  status: 'none' | 'requested' | 'accepted'
+  status: 'none' | 'requested' | 'accepted' | 'invited'
   closed?: boolean
   deadlineLabel?: string | null
 }
@@ -24,6 +24,36 @@ export function TournamentJoin({ tournamentId, visibility, status, closed, deadl
       if (!res.ok) setError(res.error ?? 'Er ging iets mis')
       else router.refresh()
     })
+  }
+
+  // Invited by the organiser → accept or decline.
+  if (status === 'invited') {
+    return (
+      <div className="mb-8 px-4 py-4 rounded-2xl" style={{ background: 'var(--accent-soft)', border: '1px solid var(--accent)' }}>
+        <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+          Je bent uitgenodigd voor dit toernooi
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => run(() => respondToInvite(tournamentId, true))}
+            disabled={pending}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm disabled:opacity-60"
+            style={{ background: 'var(--accent)', color: 'var(--on-accent)' }}
+          >
+            {pending ? '…' : 'Accepteren'}
+          </button>
+          <button
+            onClick={() => run(() => respondToInvite(tournamentId, false))}
+            disabled={pending}
+            className="px-4 py-2.5 rounded-xl font-medium text-sm disabled:opacity-60"
+            style={{ background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-color)' }}
+          >
+            Afwijzen
+          </button>
+        </div>
+        {error && <p className="text-sm mt-2" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+      </div>
+    )
   }
 
   // Already enrolled → allow withdrawing.

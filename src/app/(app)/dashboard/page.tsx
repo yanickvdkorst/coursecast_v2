@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getNotifications } from '@/lib/notifications'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 export default async function DashboardPage() {
   const supabase = await getSupabaseServerClient()
@@ -24,6 +26,8 @@ export default async function DashboardPage() {
 
   // First-time users without a name → onboarding (no extra DB call, uses already-fetched profile)
   if (!profile?.full_name) redirect('/onboarding')
+
+  const notifications = await getNotifications(supabase, user.id)
 
   const friendCount = (friendships ?? []).filter(f => f.status === 'accepted').length
   const pendingCount = (friendships ?? []).filter(f => f.status === 'pending').length
@@ -55,13 +59,16 @@ export default async function DashboardPage() {
             </p>
           )}
         </div>
-        <Link
-          href="/profile"
-          className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-          style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
-        >
-          {initials}
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <NotificationBell items={notifications} />
+          <Link
+            href="/profile"
+            className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+            style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
+          >
+            {initials}
+          </Link>
+        </div>
       </div>
 
       {/* ── Primary CTA ── */}

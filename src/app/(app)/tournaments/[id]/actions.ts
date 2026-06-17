@@ -119,6 +119,100 @@ export async function requestToJoin(tournamentId: string) {
   return { ok: true }
 }
 
+// Organiser invites registered players (status 'invited'); they must accept.
+export async function inviteToTournament(tournamentId: string, playerIds: string[]) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+  if (playerIds.length === 0) return { ok: true }
+
+  const admin = adminClient()
+  const { data: t } = await admin
+    .from('tournaments')
+    .select('id, name, status, created_by')
+    .eq('id', tournamentId)
+    .single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+  if (t.status !== 'draft') return { ok: false, error: 'Toernooi is al gestart' }
+
+  const { data: existing } = await admin
+    .from('tournament_players')
+    .select('player_id')
+    .eq('tournament_id', tournamentId)
+  const existingIds = new Set((existing ?? []).map(r => r.player_id))
+  const toInvite = playerIds.filter(pid => pid !== t.created_by && !existingIds.has(pid))
+  if (toInvite.length === 0) return { ok: true }
+
+  const { error } = await admin
+    .from('tournament_players')
+    .insert(toInvite.map(pid => ({ tournament_id: tournamentId, player_id: pid, status: 'invited' })))
+  if (error) return { ok: false, error: error.message }
+
+  for (const pid of toInvite) {
+    await sendPushToUser(pid, {
+      title: 'Uitnodiging toernooi',
+      body: `Je bent uitgenodigd voor ${t.name}`,
+      url: `/tournaments/${tournamentId}`,
+      tag: `tinvite-${tournamentId}`,
+    }).catch(() => {})
+  }
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Invited player accepts or declines.
+export async function respondToInvite(tournamentId: string, accept: boolean) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  if (!accept) {
+    await admin.from('tournament_players').delete()
+      .eq('tournament_id', tournamentId).eq('player_id', user.id).eq('status', 'invited')
+    revalidatePath(`/tournaments/${tournamentId}`)
+    return { ok: true }
+  }
+
+  const { error } = await admin
+    .from('tournament_players')
+    .update({ status: 'accepted' })
+    .eq('tournament_id', tournamentId).eq('player_id', user.id).eq('status', 'invited')
+  if (error) return { ok: false, error: error.message }
+
+  const { data: t } = await admin.from('tournaments').select('name, created_by').eq('id', tournamentId).single()
+  if (t) {
+    const { data: me } = await admin.from('profiles').select('full_name, username').eq('id', user.id).single()
+    const name = me?.full_name?.trim() || me?.username || 'Iemand'
+    await sendPushToUser(t.created_by, {
+      title: 'Uitnodiging geaccepteerd',
+      body: `${name} doet mee aan ${t.name}`,
+      url: `/tournaments/${tournamentId}`,
+      tag: `tinvacc-${tournamentId}`,
+    }).catch(() => {})
+  }
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Organiser cancels a pending invite.
+export async function cancelTournamentInvite(tournamentId: string, playerId: string) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin.from('tournaments').select('created_by').eq('id', tournamentId).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+
+  await admin.from('tournament_players').delete()
+    .eq('tournament_id', tournamentId).eq('player_id', playerId).eq('status', 'invited')
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
 // Player withdraws their enrollment or pending request (draft only).
 export async function leaveTournament(tournamentId: string) {
   const supabase = await getSupabaseServerClient()
