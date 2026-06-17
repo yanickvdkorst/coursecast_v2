@@ -76,7 +76,9 @@ export default async function MatchPage({ params }: Props) {
     else if (m.winner_id === match.player_b_id) bWins++
     else draws++
   }
-  const h2h = { aWins, bWins, draws }
+  // Orient to the viewer (falls back to player A's perspective for non-participants).
+  const viewerIsB = user.id === match.player_b_id
+  const h2h = { wins: viewerIsB ? bWins : aWins, draws, losses: viewerIsB ? aWins : bWins }
 
   return (
     <MatchScorecard

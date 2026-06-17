@@ -26,5 +26,6 @@ export async function getHeadToHeadMap(
   return map
 }
 
+// Winst–gelijk–verlies, e.g. "3-2-1". Null when no decided matches yet.
 export const h2hLabel = (r: H2HRecord) =>
-  r.wins + r.losses + r.draws === 0 ? null : `Onderling ${r.wins}–${r.losses}${r.draws > 0 ? ` · ${r.draws} gelijk` : ''}`
+  r.wins + r.losses + r.draws === 0 ? null : `${r.wins}-${r.draws}-${r.losses}`

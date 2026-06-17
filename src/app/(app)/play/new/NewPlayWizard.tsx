@@ -446,7 +446,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId, h2h
             {filteredPlayers.map(p => {
               const selected = selectedPlayers.includes(p.id)
               const rec = h2hMap[p.id]
-              const h2hShort = rec && rec.wins + rec.losses + rec.draws > 0 ? `${rec.wins}–${rec.losses}` : null
+              const h2hShort = rec && rec.wins + rec.losses + rec.draws > 0 ? `${rec.wins}-${rec.draws}-${rec.losses}` : null
               return (
                 <button
                   key={p.id}
@@ -470,7 +470,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId, h2h
                       {p.full_name || p.username}
                     </p>
                     <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                      @{p.username}{h2hShort && <span className="ml-2">· onderling {h2hShort}</span>}
+                      @{p.username}{h2hShort && <span className="ml-2">· {h2hShort}</span>}
                     </p>
                   </div>
                   {selected && <span className="text-lg" style={{ color: 'var(--accent)' }}>✓</span>}

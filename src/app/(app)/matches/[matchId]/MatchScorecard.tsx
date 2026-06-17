@@ -18,7 +18,7 @@ interface Props {
   currentUserId: string
   totalHoles: number
   isAnonymous?: boolean
-  h2h?: { aWins: number; bWins: number; draws: number }
+  h2h?: { wins: number; draws: number; losses: number }
 }
 
 type ScoringResult = 'player_a' | 'player_b' | 'halved'
@@ -191,9 +191,9 @@ export function MatchScorecard({
             {course && (
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{course.name}</p>
             )}
-            {h2h && h2h.aWins + h2h.bWins + h2h.draws > 0 && (
+            {h2h && h2h.wins + h2h.losses + h2h.draws > 0 && (
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                Onderling {h2h.aWins}–{h2h.bWins}{h2h.draws > 0 ? ` · ${h2h.draws} gelijk` : ''}
+                {h2h.wins}-{h2h.draws}-{h2h.losses}
               </p>
             )}
           </div>
