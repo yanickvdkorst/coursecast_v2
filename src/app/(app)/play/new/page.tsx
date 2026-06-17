@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { BackButton } from '@/components/ui/BackButton'
 import { NewPlayWizard } from './NewPlayWizard'
+import { getHeadToHeadMap } from '@/lib/headToHead'
 import type { Profile, Course } from '@/types/match'
 
 export default async function NewPlayPage() {
@@ -43,6 +44,8 @@ export default async function NewPlayPage() {
     .order('name')
   const courses = (coursesData ?? []) as Course[]
 
+  const h2hMap = await getHeadToHeadMap(supabase, user.id)
+
   return (
     <div className="px-4 pt-8 pb-24 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-8">
@@ -56,6 +59,7 @@ export default async function NewPlayPage() {
         allPlayers={allPlayers}
         courses={courses}
         currentUserId={user.id}
+        h2hMap={h2hMap}
       />
     </div>
   )

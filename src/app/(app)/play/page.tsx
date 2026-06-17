@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
+import { getHeadToHeadMap, h2hLabel, type H2HRecord } from '@/lib/headToHead'
 import type { Competition, Tournament } from '@/types/match'
 
 const TOURNAMENT_FORMAT_LABEL: Record<string, string> = {
@@ -28,6 +29,7 @@ export default async function PlayPage() {
   const matches = matchesRes.data ?? []
   const competitions = (competitionsRes.data ?? []) as Competition[]
   const tournaments = (tournamentsRes.data ?? []) as Tournament[]
+  const h2hMap = await getHeadToHeadMap(supabase, user.id)
 
   const activeMatches = matches.filter(m => m.status === 'active' || m.status === 'pending')
   const completedMatches = matches.filter(m => m.status === 'complete' || m.status === 'conceded')
@@ -61,7 +63,7 @@ export default async function PlayPage() {
         <Section title="Lopend">
           <List>
             {activeMatches.map((m, i) => (
-              <MatchRow key={m.id as string} match={m} userId={user.id} isFirst={i === 0} />
+              <MatchRow key={m.id as string} match={m} userId={user.id} isFirst={i === 0} h2hMap={h2hMap} />
             ))}
           </List>
         </Section>
@@ -91,7 +93,7 @@ export default async function PlayPage() {
         <Section title="Gespeeld">
           <List>
             {completedMatches.map((m, i) => (
-              <MatchRow key={m.id as string} match={m} userId={user.id} isFirst={i === 0} />
+              <MatchRow key={m.id as string} match={m} userId={user.id} isFirst={i === 0} h2hMap={h2hMap} />
             ))}
           </List>
         </Section>
@@ -151,13 +153,15 @@ function ChevronRight() {
   )
 }
 
-function MatchRow({ match, userId, isFirst }: { match: Record<string, unknown>; userId: string; isFirst: boolean }) {
+function MatchRow({ match, userId, isFirst, h2hMap }: { match: Record<string, unknown>; userId: string; isFirst: boolean; h2hMap: Record<string, H2HRecord> }) {
   const playerA = match.player_a as { username: string; full_name: string } | null
   const playerB = match.player_b as { username: string; full_name: string } | null
   const opponent = match.player_a_id === userId ? playerB : playerA
+  const opponentId = (match.player_a_id === userId ? match.player_b_id : match.player_a_id) as string
   const won = match.winner_id === userId
   const lost = match.winner_id && match.winner_id !== userId
   const initial = (opponent?.full_name || opponent?.username || '?')[0].toUpperCase()
+  const h2h = h2hMap[opponentId] ? h2hLabel(h2hMap[opponentId]) : null
 
   return (
     <Link
@@ -174,6 +178,7 @@ function MatchRow({ match, userId, isFirst }: { match: Record<string, unknown>; 
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
           vs {opponent?.full_name || opponent?.username || 'Onbekend'}
+          {h2h && <span className="ml-2 text-xs font-normal" style={{ color: 'var(--text-muted)' }}>{h2h}</span>}
         </p>
         {(match.status === 'active' || match.status === 'pending') ? (
           <p className="text-xs mt-0.5" style={{ color: match.status === 'active' ? 'var(--status-success)' : 'var(--text-muted)' }}>

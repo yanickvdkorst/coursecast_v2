@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getNotifications } from '@/lib/notifications'
+import { getHeadToHeadMap, h2hLabel } from '@/lib/headToHead'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 
 export default async function DashboardPage() {
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
   if (!profile?.full_name) redirect('/onboarding')
 
   const notifications = await getNotifications(supabase, user.id)
+  const h2hMap = await getHeadToHeadMap(supabase, user.id)
 
   const friendCount = (friendships ?? []).filter(f => f.status === 'accepted').length
   const pendingCount = (friendships ?? []).filter(f => f.status === 'pending').length
@@ -150,6 +152,8 @@ export default async function DashboardPage() {
             const playerB = (match as Record<string, unknown>).player_b as PlayerSnippet
             const isPlayerA = match.player_a_id === user.id
             const opponent = isPlayerA ? playerB : playerA
+            const opponentId = (isPlayerA ? match.player_b_id : match.player_a_id) as string
+            const h2h = h2hMap[opponentId] ? h2hLabel(h2hMap[opponentId]) : null
 
             return (
               <Link
@@ -187,6 +191,9 @@ export default async function DashboardPage() {
                     <p className="text-xs mt-0.5" style={{ color: match.status === 'active' ? 'var(--status-success)' : 'var(--text-muted)' }}>
                       {match.status === 'pending' ? 'Nog niet begonnen' : 'Bezig'}
                     </p>
+                    {h2h && (
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{h2h}</p>
+                    )}
                   </div>
                 </div>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0" style={{ color: 'var(--text-muted)' }}>
