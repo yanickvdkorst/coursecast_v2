@@ -59,6 +59,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
   const [name, setName] = useState('')
   const [tournamentFormat, setTournamentFormat] = useState<'round_robin' | 'bracket'>('round_robin')
   const [tournamentVisibility, setTournamentVisibility] = useState<'public' | 'private'>('public')
+  const [tournamentRegDeadline, setTournamentRegDeadline] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [courseId, setCourseId] = useState('')
@@ -182,6 +183,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
         name: name.trim(),
         format: tournamentFormat,
         visibility: tournamentVisibility,
+        registration_deadline: tournamentRegDeadline || null,
         status: 'draft',
         course_id: courseId || null,
         created_by: currentUserId,
@@ -318,6 +320,13 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
               <Label>Einddatum</Label>
               <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={inputClass} style={inputStyle} />
             </div>
+          </div>
+          <div className="mt-3">
+            <Label optional>Inschrijven tot</Label>
+            <input type="date" value={tournamentRegDeadline} onChange={e => setTournamentRegDeadline(e.target.value)} className={inputClass} style={inputStyle} />
+            <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
+              Uiterlijke datum waarop spelers zich kunnen inschrijven.
+            </p>
           </div>
         </section>
       )}

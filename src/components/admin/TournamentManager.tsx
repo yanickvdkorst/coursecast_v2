@@ -16,9 +16,9 @@ const FORMATS = [
 ] as const
 
 const STATUSES = [
-  { value: 'draft', label: 'Concept' },
-  { value: 'active', label: 'Actief' },
-  { value: 'complete', label: 'Afgerond' },
+  { value: 'draft', label: 'Open' },
+  { value: 'active', label: 'Bezig' },
+  { value: 'complete', label: 'Gespeeld' },
 ] as const
 
 interface MemberRow extends PickerPlayer {
@@ -26,7 +26,7 @@ interface MemberRow extends PickerPlayer {
 }
 
 interface Props {
-  tournament: { id: string; name: string; format: string; status: string; visibility: string; starts_at: string | null; ends_at: string | null }
+  tournament: { id: string; name: string; format: string; status: string; visibility: string; registration_deadline: string | null; starts_at: string | null; ends_at: string | null }
   members: MemberRow[]
   allPlayers: PickerPlayer[]
 }
@@ -42,6 +42,7 @@ export function TournamentManager({ tournament, members, allPlayers }: Props) {
   const [format, setFormat] = useState(tournament.format)
   const [status, setStatus] = useState(tournament.status)
   const [visibility, setVisibility] = useState(tournament.visibility)
+  const [regDeadline, setRegDeadline] = useState(toDateInput(tournament.registration_deadline))
   const [startDate, setStartDate] = useState(toDateInput(tournament.starts_at))
   const [endDate, setEndDate] = useState(toDateInput(tournament.ends_at))
   const [addId, setAddId] = useState('')
@@ -102,6 +103,11 @@ export function TournamentManager({ tournament, members, allPlayers }: Props) {
             <option value="private">Privé — alleen op uitnodiging / acceptatie</option>
           </select>
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Inschrijven tot</label>
+          <input type="date" value={regDeadline} onChange={e => setRegDeadline(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border text-base outline-none focus:border-[var(--color-gold-500)]" style={inputStyle} />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Startdatum</label>
@@ -122,6 +128,7 @@ export function TournamentManager({ tournament, members, allPlayers }: Props) {
               format: format as 'round_robin' | 'bracket',
               status: status as 'draft' | 'active' | 'complete',
               visibility: visibility as 'public' | 'private',
+              registrationDeadline: regDeadline || null,
               startsAt: startDate || null,
               endsAt: endDate || null,
             }),

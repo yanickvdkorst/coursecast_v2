@@ -6,6 +6,9 @@ import type { Profile, Tournament, TournamentPlayer } from '@/types/match'
 import { startTournament } from './actions'
 import { TournamentJoin } from './TournamentJoin'
 import { TournamentRequests } from './TournamentRequests'
+import { TournamentShare } from './TournamentShare'
+import { TournamentDelete } from './TournamentDelete'
+import { TournamentEnd } from './TournamentEnd'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -128,10 +131,10 @@ export default async function TournamentDetailPage({ params }: Props) {
           {t.name}
         </h1>
         <span
-          className="text-xs px-2 py-1 rounded-full font-medium capitalize"
+          className="text-xs px-2 py-1 rounded-full font-medium"
           style={{ background: 'var(--bg-card)', color: 'var(--color-gold-500)', border: '1px solid var(--color-gold-500)' }}
         >
-          {t.status}
+          {{ draft: 'Open', active: 'Bezig', complete: 'Gespeeld' }[t.status] ?? t.status}
         </span>
       </div>
 
@@ -141,9 +144,17 @@ export default async function TournamentDetailPage({ params }: Props) {
         <span className="mx-1.5">·</span>{fmt(t.starts_at)} – {fmt(t.ends_at)}
       </p>
 
+      <TournamentShare tournamentId={id} />
+
       {/* Join / request (non-organisers, while still in draft) */}
       {!isCreator && t.status === 'draft' && (
-        <TournamentJoin tournamentId={id} visibility={t.visibility} status={myStatus} />
+        <TournamentJoin
+          tournamentId={id}
+          visibility={t.visibility}
+          status={myStatus}
+          closed={!!t.registration_deadline && new Date().toISOString().slice(0, 10) > t.registration_deadline}
+          deadlineLabel={t.registration_deadline ? fmt(t.registration_deadline) : null}
+        />
       )}
 
       {/* Organiser: pending join requests */}
@@ -312,6 +323,13 @@ export default async function TournamentDetailPage({ params }: Props) {
           </button>
         </form>
       )}
+
+      {/* Organiser: end an active tournament */}
+      {isCreator && t.status === 'active' && <TournamentEnd tournamentId={id} name={t.name} />}
+
+      {/* Organiser: delete tournament — only when not actively running
+          (a running tournament must be ended first). */}
+      {isCreator && t.status !== 'active' && <TournamentDelete tournamentId={id} name={t.name} />}
     </div>
   )
 }

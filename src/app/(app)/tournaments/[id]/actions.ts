@@ -81,12 +81,15 @@ export async function requestToJoin(tournamentId: string) {
   const admin = adminClient()
   const { data: t } = await admin
     .from('tournaments')
-    .select('id, name, visibility, status, created_by')
+    .select('id, name, visibility, status, created_by, registration_deadline')
     .eq('id', tournamentId)
     .single()
   if (!t) return { ok: false, error: 'Toernooi niet gevonden' }
   if (t.status !== 'draft') return { ok: false, error: 'Dit toernooi is al gestart' }
   if (t.created_by === user.id) return { ok: false, error: 'Je bent de organisator' }
+  if (t.registration_deadline && new Date().toISOString().slice(0, 10) > t.registration_deadline) {
+    return { ok: false, error: 'De inschrijftermijn is verstreken' }
+  }
 
   const { data: existing } = await admin
     .from('tournament_players')
@@ -114,6 +117,77 @@ export async function requestToJoin(tournamentId: string) {
 
   revalidatePath(`/tournaments/${tournamentId}`)
   return { ok: true }
+}
+
+// Player withdraws their enrollment or pending request (draft only).
+export async function leaveTournament(tournamentId: string) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin
+    .from('tournaments')
+    .select('status, created_by')
+    .eq('id', tournamentId)
+    .single()
+  if (!t) return { ok: false, error: 'Toernooi niet gevonden' }
+  if (t.status !== 'draft') return { ok: false, error: 'Het toernooi is al gestart' }
+  if (t.created_by === user.id) return { ok: false, error: 'De organisator kan zich niet uitschrijven' }
+
+  await admin.from('tournament_players').delete()
+    .eq('tournament_id', tournamentId).eq('player_id', user.id)
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Organiser ends an active tournament → status 'complete' (Gespeeld).
+export async function endTournament(tournamentId: string) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin
+    .from('tournaments')
+    .select('created_by, status')
+    .eq('id', tournamentId)
+    .single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+  if (t.status !== 'active') return { ok: false, error: 'Toernooi is niet bezig' }
+
+  const { error } = await admin.from('tournaments').update({ status: 'complete' }).eq('id', tournamentId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Organiser deletes their tournament. Players cascade away; played matches
+// are kept but unlinked (matches.tournament_id → NULL via the FK).
+export async function deleteTournament(tournamentId: string) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin
+    .from('tournaments')
+    .select('created_by')
+    .eq('id', tournamentId)
+    .single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+
+  // Remove unplayed matches (no result yet) so they don't linger in players'
+  // lists. Played matches (complete/conceded) are kept but unlinked.
+  await admin.from('matches').delete()
+    .eq('tournament_id', tournamentId)
+    .in('status', ['pending', 'active'])
+
+  const { error } = await admin.from('tournaments').delete().eq('id', tournamentId)
+  if (error) return { ok: false, error: error.message }
+
+  redirect('/tournaments')
 }
 
 // Owner accepts or declines a pending request.

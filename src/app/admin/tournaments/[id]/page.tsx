@@ -15,7 +15,7 @@ export default async function AdminTournamentDetailPage({ params }: Props) {
 
   const { data: tournament } = await supabase
     .from('tournaments')
-    .select('id, name, format, status, visibility, starts_at, ends_at')
+    .select('id, name, format, status, visibility, registration_deadline, starts_at, ends_at')
     .eq('id', id)
     .single()
 

@@ -13,6 +13,7 @@ export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
   const [name, setName] = useState('')
   const [format, setFormat] = useState<'round_robin' | 'bracket'>('round_robin')
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
+  const [regDeadline, setRegDeadline] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selected, setSelected] = useState<string[]>([])
@@ -28,6 +29,7 @@ export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
           name,
           format,
           visibility,
+          registrationDeadline: regDeadline || null,
           startsAt: startDate || null,
           endsAt: endDate || null,
           playerIds: selected,
@@ -81,6 +83,14 @@ export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
           <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border text-base outline-none focus:border-[var(--color-gold-500)]" style={inputStyle} />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1" style={labelStyle}>
+          Inschrijven tot <span className="font-normal" style={{ color: 'var(--text-muted)' }}>(optioneel)</span>
+        </label>
+        <input type="date" value={regDeadline} onChange={e => setRegDeadline(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl border text-base outline-none focus:border-[var(--color-gold-500)]" style={inputStyle} />
       </div>
 
       <div>

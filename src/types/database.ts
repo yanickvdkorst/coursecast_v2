@@ -454,6 +454,7 @@ export type Database = {
           format: string
           id: string
           name: string
+          registration_deadline: string | null
           starts_at: string | null
           status: string
           visibility: string
@@ -466,6 +467,7 @@ export type Database = {
           format: string
           id?: string
           name: string
+          registration_deadline?: string | null
           starts_at?: string | null
           status?: string
           visibility?: string
@@ -478,6 +480,7 @@ export type Database = {
           format?: string
           id?: string
           name?: string
+          registration_deadline?: string | null
           starts_at?: string | null
           status?: string
           visibility?: string

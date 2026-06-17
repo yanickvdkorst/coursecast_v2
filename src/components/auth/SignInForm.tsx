@@ -1,13 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 export function SignInForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const rawNext = searchParams.get('next')
+  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,9 +28,9 @@ export function SignInForm() {
       setLoading(false)
       return
     }
-    // Keep the button in its loading state until the dashboard navigation
-    // completes — avoids a dead, re-clickable gap after a successful login.
-    router.push('/dashboard')
+    // Keep the button in its loading state until navigation completes —
+    // avoids a dead, re-clickable gap after a successful login.
+    router.push(next)
   }
 
   return (
@@ -74,7 +77,6 @@ export function SignInForm() {
             color: 'var(--text-primary)',
             borderColor: 'var(--border-color)',
           }}
-          placeholder="••••••••"
           autoComplete="current-password"
         />
         <div className="text-right mt-1.5">

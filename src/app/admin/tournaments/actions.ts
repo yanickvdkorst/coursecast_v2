@@ -12,6 +12,7 @@ export async function createTournament(input: {
   name: string
   format: TournamentFormat
   visibility: TournamentVisibility
+  registrationDeadline: string | null
   startsAt: string | null
   endsAt: string | null
   playerIds: string[]
@@ -26,6 +27,7 @@ export async function createTournament(input: {
       name: input.name.trim(),
       format: input.format,
       visibility: input.visibility,
+      registration_deadline: input.registrationDeadline || null,
       status: 'draft',
       created_by: user.id,
       starts_at: input.startsAt ? new Date(input.startsAt).toISOString() : null,
@@ -52,6 +54,7 @@ export async function updateTournament(id: string, input: {
   format: TournamentFormat
   status: TournamentStatus
   visibility: TournamentVisibility
+  registrationDeadline: string | null
   startsAt: string | null
   endsAt: string | null
 }) {
@@ -63,6 +66,7 @@ export async function updateTournament(id: string, input: {
       format: input.format,
       status: input.status,
       visibility: input.visibility,
+      registration_deadline: input.registrationDeadline || null,
       starts_at: input.startsAt ? new Date(input.startsAt).toISOString() : null,
       ends_at: input.endsAt ? new Date(input.endsAt).toISOString() : null,
     })

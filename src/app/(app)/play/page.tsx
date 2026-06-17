@@ -220,7 +220,7 @@ function CompetitionRow({ competition, isFirst }: { competition: Competition; is
 }
 
 function TournamentRow({ tournament, isFirst }: { tournament: Tournament; isFirst: boolean }) {
-  const STATUS_LABEL: Record<string, string> = { draft: 'Concept', active: 'Actief', complete: 'Afgerond' }
+  const STATUS_LABEL: Record<string, string> = { draft: 'Open', active: 'Bezig', complete: 'Gespeeld' }
   const STATUS_COLOR: Record<string, string> = {
     draft: 'var(--text-muted)',
     active: 'var(--status-success)',

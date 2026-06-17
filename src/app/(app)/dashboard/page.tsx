@@ -162,9 +162,21 @@ export default async function DashboardPage() {
                     {(opponent?.full_name || opponent?.username || '?')[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      vs {opponent?.full_name || opponent?.username}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        vs {opponent?.full_name || opponent?.username}
+                      </p>
+                      {match.tournament_id && (
+                        <span className="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 leading-none" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                          Toernooi
+                        </span>
+                      )}
+                      {match.competition_id && (
+                        <span className="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 leading-none" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
+                          Reeks
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs mt-0.5" style={{ color: match.status === 'active' ? 'var(--status-success)' : 'var(--text-muted)' }}>
                       {match.status === 'pending' ? 'Nog niet begonnen' : 'Bezig'}
                     </p>

@@ -35,10 +35,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/watch/') ||
     pathname.startsWith('/auth/')
 
-  // Unauthenticated → sign-in
+  // Unauthenticated → sign-in (remember where they were heading)
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/sign-in'
+    if (pathname !== '/' && pathname !== '/dashboard') url.searchParams.set('next', pathname)
     return NextResponse.redirect(url)
   }
 

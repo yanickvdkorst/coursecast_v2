@@ -8,14 +8,20 @@ const FORMAT_LABEL: Record<string, string> = {
   round_robin: 'Iedereen vs iedereen',
   bracket: 'Knock-out',
 }
-const STATUS_LABEL: Record<string, string> = { draft: 'Concept', active: 'Actief', complete: 'Afgerond' }
+const STATUS_LABEL: Record<string, string> = { draft: 'Open', active: 'Bezig', complete: 'Gespeeld' }
 const STATUS_COLOR: Record<string, string> = {
   draft: 'var(--text-muted)',
   active: 'var(--status-success)',
   complete: 'var(--accent)',
 }
 
-export function TournamentsBrowser({ tournaments }: { tournaments: Tournament[] }) {
+export function TournamentsBrowser({
+  tournaments,
+  membership = {},
+}: {
+  tournaments: Tournament[]
+  membership?: Record<string, string>
+}) {
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -64,8 +70,18 @@ export function TournamentsBrowser({ tournaments }: { tournaments: Tournament[] 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{t.name}</p>
+                  {membership[t.id] === 'accepted' && (
+                    <span className="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 leading-none" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                      Ingeschreven
+                    </span>
+                  )}
+                  {membership[t.id] === 'requested' && (
+                    <span className="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 leading-none" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
+                      Aangevraagd
+                    </span>
+                  )}
                   {t.visibility === 'private' && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
+                    <span className="text-[10px] font-semibold px-2 py-1 rounded-full shrink-0 leading-none" style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
                       Privé
                     </span>
                   )}

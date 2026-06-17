@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { SignInForm } from '@/components/auth/SignInForm'
 
 export default function SignInPage() {
@@ -9,7 +10,9 @@ export default function SignInPage() {
       >
         Inloggen
       </h2>
-      <SignInForm />
+      <Suspense>
+        <SignInForm />
+      </Suspense>
     </>
   )
 }
