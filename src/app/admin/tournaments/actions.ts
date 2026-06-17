@@ -6,10 +6,12 @@ import { revalidatePath } from 'next/cache'
 
 type TournamentFormat = 'round_robin' | 'bracket'
 type TournamentStatus = 'draft' | 'active' | 'complete'
+type TournamentVisibility = 'public' | 'private'
 
 export async function createTournament(input: {
   name: string
   format: TournamentFormat
+  visibility: TournamentVisibility
   startsAt: string | null
   endsAt: string | null
   playerIds: string[]
@@ -23,6 +25,7 @@ export async function createTournament(input: {
     .insert({
       name: input.name.trim(),
       format: input.format,
+      visibility: input.visibility,
       status: 'draft',
       created_by: user.id,
       starts_at: input.startsAt ? new Date(input.startsAt).toISOString() : null,
@@ -48,6 +51,7 @@ export async function updateTournament(id: string, input: {
   name: string
   format: TournamentFormat
   status: TournamentStatus
+  visibility: TournamentVisibility
   startsAt: string | null
   endsAt: string | null
 }) {
@@ -58,6 +62,7 @@ export async function updateTournament(id: string, input: {
       name: input.name.trim(),
       format: input.format,
       status: input.status,
+      visibility: input.visibility,
       starts_at: input.startsAt ? new Date(input.startsAt).toISOString() : null,
       ends_at: input.endsAt ? new Date(input.endsAt).toISOString() : null,
     })

@@ -12,6 +12,7 @@ const FORMATS = [
 export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
   const [name, setName] = useState('')
   const [format, setFormat] = useState<'round_robin' | 'bracket'>('round_robin')
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [selected, setSelected] = useState<string[]>([])
@@ -21,12 +22,12 @@ export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
   const submit = () => {
     setError(null)
     if (!name.trim()) { setError('Geef het toernooi een naam'); return }
-    if (selected.length < 2) { setError('Kies minimaal 2 spelers'); return }
     startTransition(async () => {
       try {
         await createTournament({
           name,
           format,
+          visibility,
           startsAt: startDate || null,
           endsAt: endDate || null,
           playerIds: selected,
@@ -60,6 +61,15 @@ export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
         </select>
       </div>
 
+      <div>
+        <label className="block text-sm font-medium mb-1" style={labelStyle}>Zichtbaarheid</label>
+        <select value={visibility} onChange={e => setVisibility(e.target.value as typeof visibility)}
+          className="w-full px-4 py-3 rounded-xl border text-base outline-none focus:border-[var(--color-gold-500)]" style={inputStyle}>
+          <option value="public">Openbaar — iedereen kan zich inschrijven</option>
+          <option value="private">Privé — alleen op uitnodiging / acceptatie</option>
+        </select>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1" style={labelStyle}>Startdatum</label>
@@ -74,7 +84,9 @@ export function TournamentCreateForm({ players }: { players: PickerPlayer[] }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2" style={labelStyle}>Spelers</label>
+        <label className="block text-sm font-medium mb-2" style={labelStyle}>
+          Spelers <span className="font-normal" style={{ color: 'var(--text-muted)' }}>(optioneel)</span>
+        </label>
         <PlayerPicker players={players} selected={selected} onChange={setSelected} />
       </div>
 

@@ -407,6 +407,7 @@ export type Database = {
           joined_at: string
           player_id: string
           seed: number | null
+          status: string
           tournament_id: string
         }
         Insert: {
@@ -415,6 +416,7 @@ export type Database = {
           joined_at?: string
           player_id: string
           seed?: number | null
+          status?: string
           tournament_id: string
         }
         Update: {
@@ -423,6 +425,7 @@ export type Database = {
           joined_at?: string
           player_id?: string
           seed?: number | null
+          status?: string
           tournament_id?: string
         }
         Relationships: [
@@ -453,6 +456,7 @@ export type Database = {
           name: string
           starts_at: string | null
           status: string
+          visibility: string
         }
         Insert: {
           course_id?: string | null
@@ -464,6 +468,7 @@ export type Database = {
           name: string
           starts_at?: string | null
           status?: string
+          visibility?: string
         }
         Update: {
           course_id?: string | null
@@ -475,6 +480,7 @@ export type Database = {
           name?: string
           starts_at?: string | null
           status?: string
+          visibility?: string
         }
         Relationships: [
           {

@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { BackButton } from '@/components/ui/BackButton'
 import type { Profile, Tournament, TournamentPlayer } from '@/types/match'
 import { startTournament } from './actions'
+import { TournamentJoin } from './TournamentJoin'
+import { TournamentRequests } from './TournamentRequests'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -30,18 +32,30 @@ export default async function TournamentDetailPage({ params }: Props) {
     .eq('tournament_id', id)
   const tPlayers = (tPlayersData ?? []) as TournamentPlayer[]
 
-  const playerIds = tPlayers.map(tp => tp.player_id)
+  const acceptedPlayers = tPlayers.filter(tp => tp.status === 'accepted')
+  const requestedPlayers = tPlayers.filter(tp => tp.status === 'requested')
+  const myStatus = (tPlayers.find(tp => tp.player_id === user.id)?.status ?? 'none') as 'none' | 'requested' | 'accepted'
+
+  const allMemberIds = tPlayers.map(tp => tp.player_id)
+  const playerIds = acceptedPlayers.map(tp => tp.player_id) // accepted only — used for standings/matches
   let profiles: Profile[] = []
-  if (playerIds.length > 0) {
+  if (allMemberIds.length > 0) {
     const { data } = await supabase
       .from('profiles')
       .select('id, username, full_name, avatar_url')
-      .in('id', playerIds)
+      .in('id', allMemberIds)
     profiles = (data ?? []) as Profile[]
   }
 
   const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]))
   const isCreator = t.created_by === user.id
+
+  // Accepted participants (for the players list) and pending requests (owner).
+  const acceptedProfiles = playerIds.map(pid => profileMap[pid]).filter(Boolean) as Profile[]
+  const requestProfiles = requestedPlayers.map(tp => ({
+    playerId: tp.player_id,
+    name: profileMap[tp.player_id]?.full_name || profileMap[tp.player_id]?.username || '—',
+  }))
 
   const fmt = (d: string | null) =>
     d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -122,8 +136,18 @@ export default async function TournamentDetailPage({ params }: Props) {
       </div>
 
       <p className="text-sm mb-8 ml-9" style={{ color: 'var(--text-muted)' }}>
-        {t.format === 'round_robin' ? 'Iedereen vs iedereen' : 'Knock-out'} · {fmt(t.starts_at)} – {fmt(t.ends_at)}
+        {t.format === 'round_robin' ? 'Iedereen vs iedereen' : 'Knock-out'}
+        <span className="mx-1.5">·</span>{t.visibility === 'private' ? 'Privé' : 'Openbaar'}
+        <span className="mx-1.5">·</span>{fmt(t.starts_at)} – {fmt(t.ends_at)}
       </p>
+
+      {/* Join / request (non-organisers, while still in draft) */}
+      {!isCreator && t.status === 'draft' && (
+        <TournamentJoin tournamentId={id} visibility={t.visibility} status={myStatus} />
+      )}
+
+      {/* Organiser: pending join requests */}
+      {isCreator && <TournamentRequests tournamentId={id} requests={requestProfiles} />}
 
       {/* Round-robin standings */}
       {t.format === 'round_robin' && t.status !== 'draft' && playerIds.length > 0 && (
@@ -236,24 +260,15 @@ export default async function TournamentDetailPage({ params }: Props) {
       <section className="mb-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-            Spelers ({profiles.length})
+            Spelers ({acceptedProfiles.length})
           </h2>
-          {isCreator && t.status === 'draft' && (
-            <Link
-              href={`/tournaments/${id}/add-player`}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-              style={{ background: 'var(--color-gold-500)', color: 'var(--on-accent)' }}
-            >
-              + Speler
-            </Link>
-          )}
         </div>
 
-        {profiles.length === 0 ? (
+        {acceptedProfiles.length === 0 ? (
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Nog geen spelers.</p>
         ) : (
           <div className="space-y-2">
-            {profiles.map(p => (
+            {acceptedProfiles.map(p => (
               <div
                 key={p.id}
                 className="flex items-center gap-3 px-4 py-3 rounded-2xl border"
@@ -281,7 +296,7 @@ export default async function TournamentDetailPage({ params }: Props) {
       </section>
 
       {/* Creator: start tournament */}
-      {isCreator && t.status === 'draft' && profiles.length >= 2 && (
+      {isCreator && t.status === 'draft' && acceptedPlayers.length >= 2 && (
         <form
           action={async () => {
             'use server'

@@ -58,6 +58,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([])
   const [name, setName] = useState('')
   const [tournamentFormat, setTournamentFormat] = useState<'round_robin' | 'bracket'>('round_robin')
+  const [tournamentVisibility, setTournamentVisibility] = useState<'public' | 'private'>('public')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [courseId, setCourseId] = useState('')
@@ -81,7 +82,9 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
     }
   }
 
-  const minPlayers = format === 'match' ? 1 : format === 'series' ? 1 : 2
+  // Tournaments no longer require pre-selected players — they enroll or are
+  // invited afterwards.
+  const minPlayers = format === 'tournament' ? 0 : 1
   const requiresName = format !== 'match'
   const requiresDates = format === 'tournament'
   const isGuestMatch = format === 'match' && opponentMode === 'guest'
@@ -178,6 +181,7 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
       .insert({
         name: name.trim(),
         format: tournamentFormat,
+        visibility: tournamentVisibility,
         status: 'draft',
         course_id: courseId || null,
         created_by: currentUserId,
@@ -271,6 +275,34 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
               )
             })}
           </div>
+
+          <div className="mt-5">
+            <Label>Zichtbaarheid</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: 'public', label: 'Openbaar', hint: 'Iedereen kan zich inschrijven' },
+                { value: 'private', label: 'Privé', hint: 'Alleen op uitnodiging / acceptatie' },
+              ] as const).map(v => {
+                const active = tournamentVisibility === v.value
+                return (
+                  <button
+                    key={v.value}
+                    type="button"
+                    onClick={() => setTournamentVisibility(v.value)}
+                    className="py-3 px-3 rounded-xl border text-left transition-colors"
+                    style={
+                      active
+                        ? { background: 'var(--accent-soft)', borderColor: 'var(--accent)' }
+                        : { background: 'var(--bg-card)', borderColor: 'var(--border-color)' }
+                    }
+                  >
+                    <span className="block text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{v.label}</span>
+                    <span className="block text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{v.hint}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </section>
       )}
 
@@ -292,8 +324,8 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
 
       {/* Players */}
       <section>
-        <Label>
-          {format === 'match' ? 'Tegen wie?' : 'Speel tegen'}
+        <Label optional={format === 'tournament'}>
+          {format === 'match' ? 'Tegen wie?' : format === 'tournament' ? 'Spelers' : 'Speel tegen'}
         </Label>
 
         {/* Registered vs guest toggle (match only) */}
@@ -390,6 +422,8 @@ export function NewPlayWizard({ friends, allPlayers, courses, currentUserId }: P
           <p className="text-sm py-2" style={{ color: 'var(--text-muted)' }}>
             {format === 'match'
               ? 'Geen andere spelers gevonden.'
+              : format === 'tournament'
+              ? 'Optioneel — je kunt later spelers uitnodigen of ze schrijven zich zelf in.'
               : 'Geen vrienden gevonden. Voeg eerst vrienden toe via je profiel.'}
           </p>
         ) : (
