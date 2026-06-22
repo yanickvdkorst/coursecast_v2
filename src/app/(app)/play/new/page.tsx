@@ -5,10 +5,17 @@ import { NewPlayWizard } from './NewPlayWizard'
 import { getHeadToHeadMap } from '@/lib/headToHead'
 import type { Profile, Course } from '@/types/match'
 
-export default async function NewPlayPage() {
+export default async function NewPlayPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>
+}) {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
+
+  const { type } = await searchParams
+  const initialFormat = type === 'tournament' || type === 'series' ? type : 'match'
 
   const { data: friendships } = await supabase
     .from('friendships')
@@ -60,6 +67,7 @@ export default async function NewPlayPage() {
         courses={courses}
         currentUserId={user.id}
         h2hMap={h2hMap}
+        initialFormat={initialFormat}
       />
     </div>
   )

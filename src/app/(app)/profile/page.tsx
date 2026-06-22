@@ -71,6 +71,23 @@ export default async function ProfilePage() {
         className="rounded-2xl border divide-y overflow-hidden mb-6 mt-6"
         style={{ borderColor: 'var(--border-color)' }}
       >
+        {profile?.role === 'admin' && (
+          <Link
+            href="/admin"
+            className="flex items-center justify-between px-4 py-4"
+            style={{ background: 'var(--bg-card)' }}
+          >
+            <div>
+              <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+                Admin
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                Beheer toernooien, competities en wedstrijden
+              </p>
+            </div>
+            <span style={{ color: 'var(--color-gold-500)' }}>→</span>
+          </Link>
+        )}
         <Link
           href="/rankings"
           className="flex items-center justify-between px-4 py-4"

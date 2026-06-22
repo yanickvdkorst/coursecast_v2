@@ -15,6 +15,7 @@ interface Props {
   courses: Course[]
   currentUserId: string
   h2hMap: Record<string, H2HRecord>
+  initialFormat?: GameFormat
 }
 
 const FORMAT_OPTIONS: { value: GameFormat; title: string; description: string; icon: React.ReactNode }[] = [
@@ -50,9 +51,9 @@ const FORMAT_OPTIONS: { value: GameFormat; title: string; description: string; i
   },
 ]
 
-export function NewPlayWizard({ friends, allPlayers, courses, currentUserId, h2hMap }: Props) {
+export function NewPlayWizard({ friends, allPlayers, courses, currentUserId, h2hMap, initialFormat = 'match' }: Props) {
   const router = useRouter()
-  const [format, setFormat] = useState<GameFormat>('match')
+  const [format, setFormat] = useState<GameFormat>(initialFormat)
   const [opponentMode, setOpponentMode] = useState<'registered' | 'guest'>('registered')
   const [guestKind, setGuestKind] = useState<'local' | 'remote'>('local')
   const [guestName, setGuestName] = useState('')
