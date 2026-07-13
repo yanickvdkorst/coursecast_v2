@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useFormStatus } from 'react-dom'
+import Link from 'next/link'
 import { BackButton } from '@/components/ui/BackButton'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { computeMatchStatus, getHoleResult } from '@/lib/matchplay/scoring'
@@ -308,6 +309,15 @@ export function MatchScorecard({
             leaderName={leaderName}
             leaderColor={leaderColor}
             holesRemaining={matchStatus.holesRemaining}
+            confirmHref={
+              isAnonymous
+                ? '/guest/upgrade'
+                : match.competition_id
+                  ? `/competitions/${match.competition_id}`
+                  : match.tournament_id
+                    ? `/tournaments/${match.tournament_id}`
+                    : '/play'
+            }
           />
         </div>
       </header>
@@ -447,9 +457,10 @@ interface StatusBoardProps {
   leaderName: string | null
   leaderColor: string | null
   holesRemaining: number
+  confirmHref: string
 }
 
-function StatusBoard({ matchStatus, leaderName, leaderColor, holesRemaining }: StatusBoardProps) {
+function StatusBoard({ matchStatus, leaderName, leaderColor, holesRemaining, confirmHref }: StatusBoardProps) {
   // Empty state — no holes scored yet
   if (!matchStatus.isComplete && matchStatus.holesPlayed === 0) {
     return (
@@ -504,6 +515,18 @@ function StatusBoard({ matchStatus, leaderName, leaderColor, holesRemaining }: S
       <p className="text-sm mt-2.5" style={{ color: 'var(--text-muted)' }}>
         {subtext}
       </p>
+      {matchStatus.isComplete && (
+        <Link
+          href={confirmHref}
+          className="mt-4 inline-flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-semibold text-base"
+          style={{ background: 'var(--accent)', color: 'var(--on-btn)' }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+          Bevestigen
+        </Link>
+      )}
     </div>
   )
 }
