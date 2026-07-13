@@ -112,6 +112,88 @@ export async function reconcileTournamentBracket(tournamentId: string) {
   )
 }
 
+// Organiser adds a name-only participant (no account) — creates a guest
+// profile via the service role and enrols it directly.
+export async function addTournamentGuest(tournamentId: string, name: string) {
+  const trimmed = name.trim()
+  if (!trimmed) return { ok: false, error: 'Naam is verplicht' }
+
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin.from('tournaments').select('created_by, status').eq('id', tournamentId).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+  if (t.status !== 'draft') return { ok: false, error: 'Toernooi is al gestart' }
+
+  const email = `guest_${crypto.randomUUID()}@guest.local`
+  const { data: created, error: cErr } = await admin.auth.admin.createUser({
+    email, email_confirm: true, user_metadata: { full_name: trimmed },
+  })
+  if (cErr || !created.user) return { ok: false, error: cErr?.message ?? 'Kon speler niet toevoegen' }
+  const guestId = created.user.id
+  await admin.from('profiles').update({ is_guest: true, full_name: trimmed }).eq('id', guestId)
+
+  const { error } = await admin
+    .from('tournament_players')
+    .insert({ tournament_id: tournamentId, player_id: guestId, status: 'accepted' })
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Organiser removes a participant (draft only).
+export async function removeTournamentPlayer(tournamentId: string, playerId: string) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin.from('tournaments').select('created_by, status').eq('id', tournamentId).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+  if (t.status !== 'draft') return { ok: false, error: 'Toernooi is al gestart' }
+
+  await admin.from('tournament_players').delete().eq('tournament_id', tournamentId).eq('player_id', playerId)
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Organiser enters a match result directly (handy when players have no account).
+// An optional score (e.g. "3&2") can be attached if it was kept manually.
+export async function setTournamentMatchResult(matchId: string, outcome: 'a' | 'b' | 'draw', score?: string) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: m } = await admin
+    .from('matches')
+    .select('id, tournament_id, player_a_id, player_b_id')
+    .eq('id', matchId)
+    .single()
+  if (!m || !m.tournament_id) return { ok: false, error: 'Geen toernooiwedstrijd' }
+
+  const { data: t } = await admin.from('tournaments').select('created_by, format').eq('id', m.tournament_id).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+  if (t.format === 'bracket' && outcome === 'draw') return { ok: false, error: 'Knock-out kan niet gelijk eindigen' }
+
+  const winner_id = outcome === 'a' ? m.player_a_id : outcome === 'b' ? m.player_b_id : null
+  const trimmed = score?.trim()
+  const result_summary = trimmed || (outcome === 'draw' ? 'Gelijk' : null)
+  await admin.from('matches').update({
+    status: 'complete',
+    winner_id,
+    result_summary,
+    completed_at: new Date().toISOString(),
+  }).eq('id', matchId)
+
+  await reconcileTournamentBracket(m.tournament_id)
+  revalidatePath(`/tournaments/${m.tournament_id}`)
+  return { ok: true }
+}
+
 // Player asks to join. Public → instant accept. Private → pending request +
 // notify the owner.
 export async function requestToJoin(tournamentId: string) {

@@ -14,6 +14,9 @@ import { TournamentDelete } from './TournamentDelete'
 import { TournamentEnd } from './TournamentEnd'
 import { TournamentInvite } from './TournamentInvite'
 import { TournamentInvitedList } from './TournamentInvitedList'
+import { TournamentAddGuest } from './TournamentAddGuest'
+import { TournamentResults } from './TournamentResults'
+import { RemovePlayerButton } from './RemovePlayerButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -138,6 +141,13 @@ export default async function TournamentDetailPage({ params }: Props) {
       )
     : null
 
+  // Organiser: matches still open (for manual result entry)
+  const openMatches = (isCreator && t.status === 'active')
+    ? matches
+        .filter(m => m.status !== 'complete' && m.status !== 'conceded')
+        .map(m => ({ id: m.id as string, aName: nameOf(m.player_a_id as string), bName: nameOf(m.player_b_id as string) }))
+    : []
+
   // Round-robin standings from completed matches
   type Standing = { wins: number; draws: number; losses: number; played: number }
   const standings: Record<string, Standing> = {}
@@ -224,6 +234,16 @@ export default async function TournamentDetailPage({ params }: Props) {
       {isCreator && <TournamentInvitedList tournamentId={id} invited={invitedProfiles} />}
       {isCreator && t.status === 'draft' && <TournamentInvite tournamentId={id} players={inviteCandidates} />}
 
+      {/* Organiser: add a name-only participant (no account) */}
+      {isCreator && t.status === 'draft' && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
+            Naam toevoegen (zonder account)
+          </h2>
+          <TournamentAddGuest tournamentId={id} />
+        </section>
+      )}
+
       {/* Round-robin standings */}
       {t.format === 'round_robin' && t.status !== 'draft' && playerIds.length > 0 && (
         <section className="mb-8">
@@ -277,6 +297,11 @@ export default async function TournamentDetailPage({ params }: Props) {
           </h2>
           <TournamentBracket rounds={bracketView} />
         </section>
+      )}
+
+      {/* Organiser: enter results manually */}
+      {isCreator && t.status === 'active' && (
+        <TournamentResults tournamentId={id} matches={openMatches} allowDraw={t.format === 'round_robin'} />
       )}
 
       {/* Matches per round (round-robin) */}
@@ -365,7 +390,7 @@ export default async function TournamentDetailPage({ params }: Props) {
                 >
                   {(p.full_name || p.username)[0].toUpperCase()}
                 </div>
-                <p className="text-sm font-medium flex-1" style={{ color: 'var(--text-primary)' }}>
+                <p className="text-sm font-medium flex-1 min-w-0 truncate" style={{ color: 'var(--text-primary)' }}>
                   {p.full_name || p.username}
                   {p.id === t.created_by && (
                     <span className="ml-2 text-xs" style={{ color: 'var(--color-gold-500)' }}>organisator</span>
@@ -374,6 +399,9 @@ export default async function TournamentDetailPage({ params }: Props) {
                     <span className="ml-1 text-xs" style={{ color: 'var(--text-muted)' }}>(jij)</span>
                   )}
                 </p>
+                {isCreator && t.status === 'draft' && p.id !== t.created_by && (
+                  <RemovePlayerButton tournamentId={id} playerId={p.id} />
+                )}
               </div>
             ))}
           </div>
