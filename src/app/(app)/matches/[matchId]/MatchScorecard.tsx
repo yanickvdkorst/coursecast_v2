@@ -172,15 +172,17 @@ export function MatchScorecard({
         className="sticky top-0 z-10 px-4 pt-3 pb-3"
         style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}
       >
-        <div className="flex items-center justify-between max-w-lg mx-auto mb-2.5">
-          <BackButton
-            fallback={match.competition_id ? `/competitions/${match.competition_id}` : match.tournament_id ? `/tournaments/${match.tournament_id}` : '/play'}
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-            </svg>
-          </BackButton>
+        <div className="flex items-center max-w-lg mx-auto mb-2.5">
+          <div className="flex-1 flex justify-start">
+            <BackButton
+              fallback={match.competition_id ? `/competitions/${match.competition_id}` : match.tournament_id ? `/tournaments/${match.tournament_id}` : '/play'}
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+            </BackButton>
+          </div>
 
           <div className="text-center">
             <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -199,11 +201,14 @@ export function MatchScorecard({
           </div>
 
           {/* Right actions: share (participants) + delete (non-guests) */}
-          <div className="flex items-center gap-3">
+          <div className="flex-1 flex justify-end">
+          <div className="flex items-center gap-2 -mr-2">
             {isParticipant && (
               <button
                 onClick={openShare}
                 title="Deel kijklink"
+                aria-label="Deel kijklink"
+                className="p-2 rounded-lg"
                 style={{ color: shareOpen || shareToken ? 'var(--accent)' : 'var(--text-muted)' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} className="w-5 h-5">
@@ -214,6 +219,9 @@ export function MatchScorecard({
             {!isAnonymous && (
               <button
                 onClick={() => setDeleteState(s => s === 'confirm' ? 'idle' : 'confirm')}
+                title="Verwijder wedstrijd"
+                aria-label="Verwijder wedstrijd"
+                className="p-2 rounded-lg"
                 style={{ color: deleteState === 'confirm' ? 'var(--status-danger)' : 'var(--text-muted)' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
@@ -221,6 +229,7 @@ export function MatchScorecard({
                 </svg>
               </button>
             )}
+          </div>
           </div>
         </div>
 
@@ -254,7 +263,17 @@ export function MatchScorecard({
           >
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Kijklink delen</p>
-              <button onClick={() => setShareOpen(false)} className="text-xs" style={{ color: 'var(--text-muted)' }}>Sluiten</button>
+              <button
+                onClick={() => setShareOpen(false)}
+                aria-label="Sluiten"
+                className="flex items-center gap-1 text-sm font-medium px-2.5 py-1 rounded-lg"
+                style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Sluiten
+              </button>
             </div>
             {shareBusy && !shareToken ? (
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Link aanmaken…</p>
