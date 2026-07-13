@@ -1,7 +1,15 @@
 # Gastspeler-functie — implementatieplan
 
-> Status: **nog niet gebouwd**. Dit document beschrijft de volledige aanpak zodat
-> het later in één keer uitgevoerd kan worden. Geschreven 2026-06-12.
+> Status: **GEÏMPLEMENTEERD** (migratie `013_guest_players.sql`). Dit document is
+> het oorspronkelijke plan; hieronder staat wat er daadwerkelijk gebouwd is.
+> Geschreven 2026-06-12.
+>
+> **Wat er staat:** anonieme-auth gasten via een join-code lobby (`/join`,
+> `create_guest_invite` / `lookup_guest_invite` / `join_guest_match`), én een
+> **lokale gast** (alleen naam, server-actie `createLocalGuestMatch` via de
+> service role). Gasten kunnen claimen via `/guest/upgrade`. Niet-account-gasten
+> worden gemarkeerd met `is_guest` (migratie 015) en uit spelerslijsten gefilterd.
+> De keuze in de wizard heet **Lokaal / Online**.
 
 ## Doel
 
