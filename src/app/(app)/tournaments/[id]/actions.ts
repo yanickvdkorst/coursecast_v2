@@ -3,9 +3,19 @@
 import { createClient } from '@supabase/supabase-js'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { sendPushToUser } from '@/lib/push'
+import { buildRound1Slots, pendingNextMatches, type BracketMatchRow } from '@/lib/bracket'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 function adminClient() {
   return createClient<Database>(
@@ -25,50 +35,81 @@ export async function startTournament(tournamentId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
 
-  const { data: tournament } = await supabase
+  const admin = adminClient()
+  const { data: tournament } = await admin
     .from('tournaments')
-    .select('*')
+    .select('id, format, status, created_by')
     .eq('id', tournamentId)
-    .eq('created_by', user.id)
     .single()
+  if (!tournament || tournament.created_by !== user.id || tournament.status !== 'draft') return
 
-  if (!tournament || tournament.status !== 'draft') return
-
-  const { data: players } = await supabase
+  const { data: players } = await admin
     .from('tournament_players')
-    .select('player_id')
+    .select('player_id, seed')
     .eq('tournament_id', tournamentId)
     .eq('status', 'accepted')
-
-  const playerIds = (players ?? []).map(p => p.player_id)
-  if (playerIds.length < 2) return
-
-  type MatchInsert = {
-    player_a_id: string
-    player_b_id: string
-    tournament_id: string
-    round: number
-    status: string
-  }
-
-  const matches: MatchInsert[] = []
+  const accepted = players ?? []
+  if (accepted.length < 2) return
 
   if (tournament.format === 'round_robin') {
-    for (let i = 0; i < playerIds.length; i++) {
-      for (let j = i + 1; j < playerIds.length; j++) {
-        matches.push({ player_a_id: playerIds[i], player_b_id: playerIds[j], tournament_id: tournamentId, round: 1, status: 'pending' })
-      }
-    }
-  } else {
-    for (let i = 0; i + 1 < playerIds.length; i += 2) {
-      matches.push({ player_a_id: playerIds[i], player_b_id: playerIds[i + 1], tournament_id: tournamentId, round: 1, status: 'pending' })
-    }
+    const ids = accepted.map(p => p.player_id)
+    const matches = []
+    for (let i = 0; i < ids.length; i++)
+      for (let j = i + 1; j < ids.length; j++)
+        matches.push({ player_a_id: ids[i], player_b_id: ids[j], tournament_id: tournamentId, round: 1, status: 'pending' })
+    await admin.from('matches').insert(matches)
+    await admin.from('tournaments').update({ status: 'active' }).eq('id', tournamentId)
+    redirect(`/tournaments/${tournamentId}`)
+    return
   }
 
-  await supabase.from('matches').insert(matches)
-  await supabase.from('tournaments').update({ status: 'active' }).eq('id', tournamentId)
+  // Knock-out: seeded players first (by seed), then unseeded shuffled → byes to
+  // the strongest. Store the round-1 slot order; create round-1 matches.
+  const seeded = accepted.filter(p => p.seed != null).sort((a, b) => (a.seed as number) - (b.seed as number))
+  const unseeded = shuffle(accepted.filter(p => p.seed == null).map(p => p.player_id))
+  const ordered = [...seeded.map(p => p.player_id), ...unseeded]
+  const slots = buildRound1Slots(ordered)
+
+  const round1 = []
+  for (let p = 0; p < slots.length / 2; p++) {
+    const a = slots[2 * p], b = slots[2 * p + 1]
+    if (a && b) round1.push({ player_a_id: a, player_b_id: b, tournament_id: tournamentId, round: 1, bracket_pos: p, status: 'pending' })
+  }
+  await admin.from('matches').insert(round1)
+  await admin.from('tournaments').update({ status: 'active', bracket: slots }).eq('id', tournamentId)
+
+  // Create any matches that are already decided by byes (e.g. bye vs bye).
+  await reconcileTournamentBracket(tournamentId)
 
   redirect(`/tournaments/${tournamentId}`)
+}
+
+// Create the next bracket matches whose feeders are both decided. Idempotent;
+// run on tournament view (winners advance as matches complete). No auth needed
+// — purely derived from existing results.
+export async function reconcileTournamentBracket(tournamentId: string) {
+  const admin = adminClient()
+  const { data: t } = await admin
+    .from('tournaments')
+    .select('bracket, format, status')
+    .eq('id', tournamentId)
+    .single()
+  if (!t || t.format !== 'bracket' || t.status !== 'active' || !t.bracket) return
+
+  const slots = t.bracket as (string | null)[]
+  const { data: ms } = await admin
+    .from('matches')
+    .select('round, bracket_pos, winner_id, status')
+    .eq('tournament_id', tournamentId)
+  const rows: BracketMatchRow[] = (ms ?? []).map(m => ({
+    round: m.round ?? 1, bracket_pos: m.bracket_pos ?? 0, winner_id: m.winner_id, status: m.status,
+  }))
+
+  const toCreate = pendingNextMatches(slots, rows)
+  if (toCreate.length === 0) return
+  await admin.from('matches').insert(
+    toCreate.map(c => ({ player_a_id: c.a, player_b_id: c.b, tournament_id: tournamentId, round: c.round, bracket_pos: c.pos, status: 'pending' }))
+  )
 }
 
 // Player asks to join. Public → instant accept. Private → pending request +

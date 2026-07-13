@@ -278,6 +278,7 @@ export type Database = {
           player_b_id: string
           result_summary: string | null
           round: number | null
+          bracket_pos: number | null
           share_token: string | null
           started_at: string | null
           status: string
@@ -294,6 +295,7 @@ export type Database = {
           player_b_id: string
           result_summary?: string | null
           round?: number | null
+          bracket_pos?: number | null
           share_token?: string | null
           started_at?: string | null
           status?: string
@@ -310,6 +312,7 @@ export type Database = {
           player_b_id?: string
           result_summary?: string | null
           round?: number | null
+          bracket_pos?: number | null
           share_token?: string | null
           started_at?: string | null
           status?: string
@@ -447,6 +450,7 @@ export type Database = {
       }
       tournaments: {
         Row: {
+          bracket: Json | null
           course_id: string | null
           created_at: string
           created_by: string
@@ -460,6 +464,7 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          bracket?: Json | null
           course_id?: string | null
           created_at?: string
           created_by: string
@@ -473,6 +478,7 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          bracket?: Json | null
           course_id?: string | null
           created_at?: string
           created_by?: string

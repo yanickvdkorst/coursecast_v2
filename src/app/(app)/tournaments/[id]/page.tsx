@@ -3,7 +3,10 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { BackButton } from '@/components/ui/BackButton'
 import type { Profile, Tournament, TournamentPlayer } from '@/types/match'
-import { startTournament } from './actions'
+import { startTournament, reconcileTournamentBracket } from './actions'
+import { TournamentBracket } from './TournamentBracket'
+import { buildBracketView } from '@/lib/bracket'
+import type { BracketMatchRow } from '@/lib/bracket'
 import { TournamentJoin } from './TournamentJoin'
 import { TournamentRequests } from './TournamentRequests'
 import { TournamentShare } from './TournamentShare'
@@ -30,6 +33,11 @@ export default async function TournamentDetailPage({ params }: Props) {
 
   if (!tournament) notFound()
   const t = tournament as Tournament
+
+  // Advance the knock-out bracket if matches have been decided since last view.
+  if (t.format === 'bracket' && t.status === 'active') {
+    await reconcileTournamentBracket(id)
+  }
 
   const { data: tPlayersData } = await supabase
     .from('tournament_players')
@@ -111,6 +119,24 @@ export default async function TournamentDetailPage({ params }: Props) {
     acc[r].push(m)
     return acc
   }, {})
+
+  // Visual knock-out bracket
+  const nameOf = (pid: string) => profileMap[pid]?.full_name || profileMap[pid]?.username || '?'
+  const bracketView = (t.format === 'bracket' && t.status !== 'draft' && t.bracket)
+    ? buildBracketView(
+        t.bracket as (string | null)[],
+        matches.map(m => ({
+          id: m.id as string,
+          round: (m.round as number) ?? 1,
+          bracket_pos: (m.bracket_pos as number) ?? 0,
+          winner_id: (m.winner_id as string | null) ?? null,
+          status: m.status as string,
+          player_a_id: m.player_a_id as string,
+          player_b_id: m.player_b_id as string,
+        })) as (BracketMatchRow & { id: string; player_a_id: string; player_b_id: string })[],
+        nameOf,
+      )
+    : null
 
   // Round-robin standings from completed matches
   type Standing = { wins: number; draws: number; losses: number; played: number }
@@ -243,8 +269,18 @@ export default async function TournamentDetailPage({ params }: Props) {
         </section>
       )}
 
-      {/* Matches per round */}
-      {t.status !== 'draft' && (
+      {/* Bracket (knock-out) */}
+      {bracketView && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
+            Schema
+          </h2>
+          <TournamentBracket rounds={bracketView} />
+        </section>
+      )}
+
+      {/* Matches per round (round-robin) */}
+      {t.status !== 'draft' && t.format === 'round_robin' && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>
             Wedstrijden
