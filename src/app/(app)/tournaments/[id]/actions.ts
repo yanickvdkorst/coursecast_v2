@@ -144,6 +144,28 @@ export async function addTournamentGuest(tournamentId: string, name: string) {
   return { ok: true }
 }
 
+// Organiser sets seeds (placement) for a knock-out draw. Players with a number
+// are seeded (sorted ascending); the rest are drawn randomly. Draft only.
+export async function setTournamentSeeds(tournamentId: string, seeds: { playerId: string; seed: number | null }[]) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin.from('tournaments').select('created_by, status').eq('id', tournamentId).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+  if (t.status !== 'draft') return { ok: false, error: 'Toernooi is al gestart' }
+
+  for (const s of seeds) {
+    await admin.from('tournament_players')
+      .update({ seed: s.seed })
+      .eq('tournament_id', tournamentId)
+      .eq('player_id', s.playerId)
+  }
+  revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
 // Organiser removes a participant (draft only).
 export async function removeTournamentPlayer(tournamentId: string, playerId: string) {
   const supabase = await getSupabaseServerClient()

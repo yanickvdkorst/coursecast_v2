@@ -17,6 +17,7 @@ import { TournamentInvitedList } from './TournamentInvitedList'
 import { TournamentAddGuest } from './TournamentAddGuest'
 import { TournamentResults } from './TournamentResults'
 import { RemovePlayerButton } from './RemovePlayerButton'
+import { TournamentSeeding } from './TournamentSeeding'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -69,6 +70,11 @@ export default async function TournamentDetailPage({ params }: Props) {
 
   // Accepted participants (for the players list) and pending requests (owner).
   const acceptedProfiles = playerIds.map(pid => profileMap[pid]).filter(Boolean) as Profile[]
+  const seedPlayers = acceptedPlayers.map(tp => ({
+    id: tp.player_id,
+    name: profileMap[tp.player_id]?.full_name || profileMap[tp.player_id]?.username || '—',
+    seed: tp.seed,
+  }))
   const requestProfiles = requestedPlayers.map(tp => ({
     playerId: tp.player_id,
     name: profileMap[tp.player_id]?.full_name || profileMap[tp.player_id]?.username || '—',
@@ -408,6 +414,11 @@ export default async function TournamentDetailPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      {/* Organiser: seeding (knock-out, draft) */}
+      {isCreator && t.status === 'draft' && t.format === 'bracket' && seedPlayers.length >= 2 && (
+        <TournamentSeeding tournamentId={id} players={seedPlayers} />
+      )}
 
       {/* Creator: start tournament */}
       {isCreator && t.status === 'draft' && acceptedPlayers.length >= 2 && (
