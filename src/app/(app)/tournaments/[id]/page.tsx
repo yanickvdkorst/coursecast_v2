@@ -5,7 +5,7 @@ import { BackButton } from '@/components/ui/BackButton'
 import type { Profile, Tournament, TournamentPlayer } from '@/types/match'
 import { startTournament, reconcileTournamentBracket } from './actions'
 import { TournamentBracket } from './TournamentBracket'
-import { buildBracketView } from '@/lib/bracket'
+import { buildBracketView, roundName } from '@/lib/bracket'
 import type { BracketMatchRow } from '@/lib/bracket'
 import { TournamentJoin } from './TournamentJoin'
 import { TournamentRequests } from './TournamentRequests'
@@ -157,9 +157,37 @@ export default async function TournamentDetailPage({ params }: Props) {
         .map(m => ({ id: m.id as string, aName: nameOf(m.player_a_id as string), bName: nameOf(m.player_b_id as string) }))
     : []
 
-  // Organiser: per-match date/time
-  const scheduleMatches = (isCreator && t.status === 'active')
-    ? matches.map(m => ({ id: m.id as string, aName: nameOf(m.player_a_id as string), bName: nameOf(m.player_b_id as string), scheduledAt: (m.scheduled_at as string | null) ?? null }))
+  // Organiser: per-match date/time. For a bracket we list every slot across all
+  // rounds (incl. future ones without a match row yet); for round-robin the
+  // existing matches.
+  const schedByMatchId: Record<string, string | null> = Object.fromEntries(
+    matches.map(m => [m.id as string, (m.scheduled_at as string | null) ?? null])
+  )
+  const slotSchedule = ((t as unknown as { slot_schedule?: Record<string, string> | null }).slot_schedule) ?? {}
+  const scheduleItems = (isCreator && t.status === 'active')
+    ? (bracketView
+        ? bracketView.flatMap((boxes, ri) => {
+            const round = ri + 1
+            const group = roundName(round, bracketView.length)
+            return boxes
+              .map((box, pos) => ({ box, pos }))
+              // Skip round-1 byes (no match is ever played there).
+              .filter(({ box }) => !(round === 1 && !box.matchId))
+              .map(({ box, pos }) => ({
+                key: `${round}:${pos}`,
+                label: `${box.a?.name ?? box.aPlaceholder ?? '—'} vs ${box.b?.name ?? box.bPlaceholder ?? '—'}`,
+                group,
+                scheduledAt: box.matchId ? (schedByMatchId[box.matchId] ?? null) : (slotSchedule[`${round}:${pos}`] ?? null),
+                round,
+                pos,
+              }))
+          })
+        : matches.map(m => ({
+            key: m.id as string,
+            label: `${nameOf(m.player_a_id as string)} vs ${nameOf(m.player_b_id as string)}`,
+            scheduledAt: (m.scheduled_at as string | null) ?? null,
+            matchId: m.id as string,
+          })))
     : []
 
   // Schedule rows for export
@@ -337,7 +365,7 @@ export default async function TournamentDetailPage({ params }: Props) {
 
       {/* Organiser: per-match date/time */}
       {isCreator && t.status === 'active' && (
-        <TournamentSchedule tournamentId={id} matches={scheduleMatches} />
+        <TournamentSchedule tournamentId={id} items={scheduleItems} />
       )}
 
       {/* Export planning (once matches exist) */}

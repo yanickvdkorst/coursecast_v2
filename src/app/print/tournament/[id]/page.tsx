@@ -21,7 +21,7 @@ export default async function TournamentPrintPage({ params }: Props) {
 
   const { data: tournament } = await supabase
     .from('tournaments')
-    .select('name, format, starts_at, ends_at, bracket')
+    .select('name, format, starts_at, ends_at, bracket, slot_schedule')
     .eq('id', id)
     .single()
   if (!tournament) notFound()
@@ -55,6 +55,7 @@ export default async function TournamentPrintPage({ params }: Props) {
     : null
 
   const schedById = Object.fromEntries(matches.map(m => [m.id, m.scheduled_at as string | null]))
+  const slotSchedule = (tournament.slot_schedule as Record<string, string> | null) ?? {}
 
   const rounds = matches.reduce<Record<number, typeof matches>>((acc, m) => {
     const r = (m.round as number) ?? 1
@@ -92,7 +93,8 @@ export default async function TournamentPrintPage({ params }: Props) {
             <div key={ri} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: 12, minWidth: 170 }}>
               <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, color: '#555', margin: 0 }}>{roundName(ri + 1, bracketView.length)}</p>
               {boxes.map((box, bi) => {
-                const sched = box.matchId ? fmtDateTime(schedById[box.matchId] ?? null) : ''
+                const rawSched = box.matchId ? (schedById[box.matchId] ?? null) : (slotSchedule[`${ri + 1}:${bi}`] ?? null)
+                const sched = fmtDateTime(rawSched)
                 const side = (name?: string, won?: boolean, score?: string, ph?: string) => (
                   <div style={{ padding: '6px 8px', fontSize: 13, color: won ? '#0a6135' : name ? '#111' : '#888', fontWeight: won ? 700 : 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {name ?? ph ?? '—'}{won && score ? ` (${score})` : ''}

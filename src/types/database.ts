@@ -462,6 +462,7 @@ export type Database = {
           id: string
           name: string
           registration_deadline: string | null
+          slot_schedule: Json | null
           starts_at: string | null
           status: string
           visibility: string
@@ -476,6 +477,7 @@ export type Database = {
           id?: string
           name: string
           registration_deadline?: string | null
+          slot_schedule?: Json | null
           starts_at?: string | null
           status?: string
           visibility?: string
@@ -490,6 +492,7 @@ export type Database = {
           id?: string
           name?: string
           registration_deadline?: string | null
+          slot_schedule?: Json | null
           starts_at?: string | null
           status?: string
           visibility?: string

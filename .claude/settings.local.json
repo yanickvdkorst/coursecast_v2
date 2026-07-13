@@ -22,7 +22,9 @@
       "Bash(git add *)",
       "Bash(git commit -q -m ' *)",
       "Bash(git push *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git commit -q -m 'Bracket + schedule on tournament PDF; per-match date/time; optional seeding toggle *)",
+      "Bash(git commit -q -m 'Pre-schedule future bracket rounds \\(slots without players yet\\) *)"
     ]
   }
 }

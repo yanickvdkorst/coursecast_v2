@@ -105,7 +105,7 @@ export async function reconcileTournamentBracket(tournamentId: string) {
   const admin = adminClient()
   const { data: t } = await admin
     .from('tournaments')
-    .select('bracket, format, status')
+    .select('bracket, format, status, slot_schedule')
     .eq('id', tournamentId)
     .single()
   if (!t || t.format !== 'bracket' || t.status !== 'active' || !t.bracket) return
@@ -121,9 +121,23 @@ export async function reconcileTournamentBracket(tournamentId: string) {
 
   const toCreate = pendingNextMatches(slots, rows)
   if (toCreate.length === 0) return
+
+  // Apply any pre-scheduled date/time for these slots, then drop the used keys.
+  const sched = (t as { slot_schedule?: Record<string, string> | null }).slot_schedule ?? {}
+  const usedKeys: string[] = []
   await admin.from('matches').insert(
-    toCreate.map(c => ({ player_a_id: c.a, player_b_id: c.b, tournament_id: tournamentId, round: c.round, bracket_pos: c.pos, status: 'pending' }))
+    toCreate.map(c => {
+      const key = `${c.round}:${c.pos}`
+      const at = sched[key]
+      if (at) usedKeys.push(key)
+      return { player_a_id: c.a, player_b_id: c.b, tournament_id: tournamentId, round: c.round, bracket_pos: c.pos, status: 'pending', scheduled_at: at ?? null }
+    })
   )
+  if (usedKeys.length) {
+    const rest = { ...sched }
+    for (const k of usedKeys) delete rest[k]
+    await admin.from('tournaments').update({ slot_schedule: rest }).eq('id', tournamentId)
+  }
 }
 
 // Organiser adds a name-only participant (no account) — creates a guest
@@ -196,6 +210,42 @@ export async function setMatchSchedule(matchId: string, scheduledAt: string | nu
     .update({ scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null })
     .eq('id', matchId)
   revalidatePath(`/tournaments/${m.tournament_id}`)
+  return { ok: true }
+}
+
+// Organiser schedules a bracket slot by (round, pos). If the match already
+// exists, sets its scheduled_at; otherwise stores it on the tournament so it's
+// applied when that match is later created (planning ahead of future rounds).
+export async function setSlotSchedule(tournamentId: string, round: number, pos: number, scheduledAt: string | null) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: t } = await admin.from('tournaments').select('created_by, slot_schedule').eq('id', tournamentId).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+
+  const iso = scheduledAt ? new Date(scheduledAt).toISOString() : null
+
+  const { data: existing } = await admin
+    .from('matches')
+    .select('id')
+    .eq('tournament_id', tournamentId)
+    .eq('round', round)
+    .eq('bracket_pos', pos)
+    .maybeSingle()
+
+  if (existing) {
+    await admin.from('matches').update({ scheduled_at: iso }).eq('id', existing.id)
+  } else {
+    const sched = { ...((t.slot_schedule as Record<string, string> | null) ?? {}) }
+    const key = `${round}:${pos}`
+    if (iso) sched[key] = iso
+    else delete sched[key]
+    await admin.from('tournaments').update({ slot_schedule: sched }).eq('id', tournamentId)
+  }
+
+  revalidatePath(`/tournaments/${tournamentId}`)
   return { ok: true }
 }
 
