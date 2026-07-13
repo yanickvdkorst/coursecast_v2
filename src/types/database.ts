@@ -281,6 +281,7 @@ export type Database = {
           bracket_pos: number | null
           share_token: string | null
           started_at: string | null
+          scheduled_at: string | null
           status: string
           tournament_id: string | null
           winner_id: string | null
@@ -298,6 +299,7 @@ export type Database = {
           bracket_pos?: number | null
           share_token?: string | null
           started_at?: string | null
+          scheduled_at?: string | null
           status?: string
           tournament_id?: string | null
           winner_id?: string | null
@@ -315,6 +317,7 @@ export type Database = {
           bracket_pos?: number | null
           share_token?: string | null
           started_at?: string | null
+          scheduled_at?: string | null
           status?: string
           tournament_id?: string | null
           winner_id?: string | null

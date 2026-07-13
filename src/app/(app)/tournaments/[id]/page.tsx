@@ -18,6 +18,8 @@ import { TournamentAddGuest } from './TournamentAddGuest'
 import { TournamentResults } from './TournamentResults'
 import { RemovePlayerButton } from './RemovePlayerButton'
 import { TournamentSeeding } from './TournamentSeeding'
+import { TournamentExport } from './TournamentExport'
+import { TournamentSchedule } from './TournamentSchedule'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -154,6 +156,28 @@ export default async function TournamentDetailPage({ params }: Props) {
         .filter(m => m.status !== 'complete' && m.status !== 'conceded')
         .map(m => ({ id: m.id as string, aName: nameOf(m.player_a_id as string), bName: nameOf(m.player_b_id as string) }))
     : []
+
+  // Organiser: per-match date/time
+  const scheduleMatches = (isCreator && t.status === 'active')
+    ? matches.map(m => ({ id: m.id as string, aName: nameOf(m.player_a_id as string), bName: nameOf(m.player_b_id as string), scheduledAt: (m.scheduled_at as string | null) ?? null }))
+    : []
+
+  // Schedule rows for export
+  const STATUS_TX: Record<string, string> = { pending: 'Gepland', active: 'Bezig', complete: 'Afgerond', conceded: 'Opgegeven' }
+  const scheduleRows = matches.map(m => {
+    const done = m.status === 'complete' || m.status === 'conceded'
+    const rawScore = m.result_summary as string | null
+    return {
+      round: (m.round as number) ?? 1,
+      a: nameOf(m.player_a_id as string),
+      b: nameOf(m.player_b_id as string),
+      status: STATUS_TX[m.status as string] ?? (m.status as string),
+      winner: m.winner_id ? nameOf(m.winner_id as string) : done ? 'Gelijk' : '',
+      score: rawScore && rawScore !== 'Gelijk' && rawScore !== 'Handmatig' ? rawScore : '',
+      scheduled: m.scheduled_at ? new Date(m.scheduled_at as string).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '',
+      date: m.completed_at ? new Date(m.completed_at as string).toLocaleDateString('nl-NL') : '',
+    }
+  })
 
   // Round-robin standings from completed matches
   type Standing = { wins: number; draws: number; losses: number; played: number }
@@ -309,6 +333,16 @@ export default async function TournamentDetailPage({ params }: Props) {
       {/* Organiser: enter results manually */}
       {isCreator && t.status === 'active' && (
         <TournamentResults tournamentId={id} matches={openMatches} allowDraw={t.format === 'round_robin'} />
+      )}
+
+      {/* Organiser: per-match date/time */}
+      {isCreator && t.status === 'active' && (
+        <TournamentSchedule tournamentId={id} matches={scheduleMatches} />
+      )}
+
+      {/* Export planning (once matches exist) */}
+      {t.status !== 'draft' && matches.length > 0 && (
+        <TournamentExport rows={scheduleRows} tournamentName={t.name} printHref={`/print/tournament/${id}`} />
       )}
 
       {/* Matches per round (round-robin) */}

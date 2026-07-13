@@ -11,6 +11,7 @@ export function TournamentSeeding({ tournamentId, players }: { tournamentId: str
   const [values, setValues] = useState<Record<string, string>>(
     Object.fromEntries(players.map(p => [p.id, p.seed != null ? String(p.seed) : '']))
   )
+  const [enabled, setEnabled] = useState(players.some(p => p.seed != null))
   const [pending, start] = useTransition()
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,12 +30,47 @@ export function TournamentSeeding({ tournamentId, players }: { tournamentId: str
     })
   }
 
+  const toggle = () => {
+    const next = !enabled
+    setEnabled(next)
+    if (!next) {
+      // Turning off → clear seeds so the draw is fully random.
+      setValues(Object.fromEntries(players.map(p => [p.id, ''])))
+      start(async () => { await setTournamentSeeds(tournamentId, players.map(p => ({ playerId: p.id, seed: null }))); router.refresh() })
+    }
+  }
+
   return (
     <section className="mb-8">
-      <h2 className="text-sm font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>
-        Plaatsing (optioneel)
-      </h2>
-      <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+      <div className="flex items-center justify-between">
+        <div className="pr-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+            Plaatsing
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Zet aan om spelers handmatig te plaatsen; anders willekeurig geloot.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Plaatsing gebruiken"
+          onClick={toggle}
+          disabled={pending}
+          className="relative w-11 h-6 rounded-full shrink-0 transition-colors disabled:opacity-60"
+          style={{ background: enabled ? 'var(--accent)' : 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}
+        >
+          <span
+            className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full transition-transform"
+            style={{ background: '#fff', transform: enabled ? 'translateX(20px)' : 'none' }}
+          />
+        </button>
+      </div>
+
+      {!enabled ? null : (
+      <>
+      <p className="text-xs mt-3 mb-3" style={{ color: 'var(--text-muted)' }}>
         Geef geplaatste spelers een nummer (1 = hoogst geplaatst). Zonder nummer worden ze willekeurig geloot.
       </p>
       <div className="space-y-2">
@@ -64,6 +100,8 @@ export function TournamentSeeding({ tournamentId, players }: { tournamentId: str
         {pending ? 'Opslaan…' : saved ? 'Opgeslagen ✓' : 'Plaatsing opslaan'}
       </button>
       {error && <p className="text-sm mt-2" style={{ color: 'var(--status-danger)' }}>{error}</p>}
+      </>
+      )}
     </section>
   )
 }

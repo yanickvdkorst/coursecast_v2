@@ -38,7 +38,7 @@ export async function startTournament(tournamentId: string) {
   const admin = adminClient()
   const { data: tournament } = await admin
     .from('tournaments')
-    .select('id, format, status, created_by')
+    .select('id, name, format, status, created_by')
     .eq('id', tournamentId)
     .single()
   if (!tournament || tournament.created_by !== user.id || tournament.status !== 'draft') return
@@ -51,6 +51,18 @@ export async function startTournament(tournamentId: string) {
   const accepted = players ?? []
   if (accepted.length < 2) return
 
+  // Notify participants (except the organiser) that the schedule is ready.
+  const notifyScheduleReady = async () => {
+    await Promise.all(accepted
+      .filter(p => p.player_id !== user.id)
+      .map(p => sendPushToUser(p.player_id, {
+        title: 'Toernooischema bekend',
+        body: `Het schema van ${tournament.name} is bekend`,
+        url: `/tournaments/${tournamentId}`,
+        tag: `tstart-${tournamentId}`,
+      }).catch(() => {})))
+  }
+
   if (tournament.format === 'round_robin') {
     const ids = accepted.map(p => p.player_id)
     const matches = []
@@ -59,6 +71,7 @@ export async function startTournament(tournamentId: string) {
         matches.push({ player_a_id: ids[i], player_b_id: ids[j], tournament_id: tournamentId, round: 1, status: 'pending' })
     await admin.from('matches').insert(matches)
     await admin.from('tournaments').update({ status: 'active' }).eq('id', tournamentId)
+    await notifyScheduleReady()
     redirect(`/tournaments/${tournamentId}`)
     return
   }
@@ -80,6 +93,7 @@ export async function startTournament(tournamentId: string) {
 
   // Create any matches that are already decided by byes (e.g. bye vs bye).
   await reconcileTournamentBracket(tournamentId)
+  await notifyScheduleReady()
 
   redirect(`/tournaments/${tournamentId}`)
 }
@@ -163,6 +177,25 @@ export async function setTournamentSeeds(tournamentId: string, seeds: { playerId
       .eq('player_id', s.playerId)
   }
   revalidatePath(`/tournaments/${tournamentId}`)
+  return { ok: true }
+}
+
+// Organiser sets an optional date/time for a match.
+export async function setMatchSchedule(matchId: string, scheduledAt: string | null) {
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Niet ingelogd' }
+
+  const admin = adminClient()
+  const { data: m } = await admin.from('matches').select('tournament_id').eq('id', matchId).single()
+  if (!m || !m.tournament_id) return { ok: false, error: 'Geen toernooiwedstrijd' }
+  const { data: t } = await admin.from('tournaments').select('created_by').eq('id', m.tournament_id).single()
+  if (!t || t.created_by !== user.id) return { ok: false, error: 'Geen organisator' }
+
+  await admin.from('matches')
+    .update({ scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null })
+    .eq('id', matchId)
+  revalidatePath(`/tournaments/${m.tournament_id}`)
   return { ok: true }
 }
 

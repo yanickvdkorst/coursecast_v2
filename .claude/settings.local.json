@@ -12,7 +12,17 @@
       "Bash(curl -s -o /dev/null -w \"/play/new HTTP %{http_code}\\\\n\" http://localhost:3000/play/new)",
       "Bash(curl -s -o /dev/null -w \"/dashboard HTTP %{http_code}\\\\n\" http://localhost:3000/dashboard)",
       "Bash(curl -s -o /dev/null -w \"/matches \\(should redirect to /play\\) HTTP %{http_code}\\\\n\" http://localhost:3000/matches)",
-      "Bash(curl -s -L -o /dev/null -w \"%{http_code} -> %{url_effective}\\\\n\" http://localhost:3000/play)"
+      "Bash(curl -s -L -o /dev/null -w \"%{http_code} -> %{url_effective}\\\\n\" http://localhost:3000/play)",
+      "Bash(grep -rnE \"from\\\\\\(['\\\\\"]matches['\\\\\"]\\\\\\)\\\\s*$|from\\\\\\(['\\\\\"]matches['\\\\\"]\\\\\\)\\\\.insert|\\\\.from\\\\\\(['\\\\\"]matches['\\\\\"]\\\\\\)\" src/)",
+      "Bash(grep -rnB1 -A8 \"from\\('matches'\\)\" src/app/\\\\\\(app\\\\\\)/competitions/\\\\[id\\\\]/actions.ts src/app/admin/competitions/actions.ts src/app/admin/tournaments/actions.ts src/app/\\\\\\(app\\\\\\)/tournaments/\\\\[id\\\\]/actions.ts)",
+      "Bash(grep -nB2 -A12 \"hole_results\" supabase/migrations/002_rls_policies.sql)",
+      "Bash(grep -nB2 -A12 -i \"on matches\\\\|policy.*match\\\\|matches for\" supabase/migrations/002_rls_policies.sql)",
+      "Bash(grep -nB1 -A8 \"is_match_participant\" supabase/migrations/002_rls_policies.sql)",
+      "Bash(grep -n \"starts_at: string | null$\\\\|          round: number | null\" src/types/database.ts)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm run *)"
     ]
   }
 }
