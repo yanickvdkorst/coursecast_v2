@@ -32,6 +32,7 @@ export interface BracketMatchRow {
   bracket_pos: number
   winner_id: string | null
   status: string
+  result_summary?: string | null
 }
 
 const isDecided = (m?: BracketMatchRow) =>
@@ -92,8 +93,8 @@ export function pendingNextMatches(
 
 export interface BracketBox {
   matchId?: string
-  a?: { name: string; won: boolean }
-  b?: { name: string; won: boolean }
+  a?: { name: string; won: boolean; score?: string }
+  b?: { name: string; won: boolean; score?: string }
   aPlaceholder?: string
   bPlaceholder?: string
 }
@@ -117,10 +118,13 @@ export function buildBracketView(
     for (let p = 0; p < count; p++) {
       const m = at(r, p)
       if (m) {
+        const score = m.result_summary && m.result_summary !== 'Gelijk' ? m.result_summary : undefined
+        const aWon = m.winner_id === m.player_a_id
+        const bWon = m.winner_id === m.player_b_id
         boxes.push({
           matchId: m.id,
-          a: { name: nameOf(m.player_a_id), won: m.winner_id === m.player_a_id },
-          b: { name: nameOf(m.player_b_id), won: m.winner_id === m.player_b_id },
+          a: { name: nameOf(m.player_a_id), won: aWon, score: aWon ? (score || undefined) : undefined },
+          b: { name: nameOf(m.player_b_id), won: bWon, score: bWon ? (score || undefined) : undefined },
         })
       } else if (r === 1) {
         const sa = slots[2 * p], sb = slots[2 * p + 1]

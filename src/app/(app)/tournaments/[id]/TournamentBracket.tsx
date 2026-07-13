@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { roundName, type BracketBox } from '@/lib/bracket'
 
-function Side({ name, won, placeholder }: { name?: string; won?: boolean; placeholder?: string }) {
+function Side({ name, won, score, placeholder }: { name?: string; won?: boolean; score?: string; placeholder?: string }) {
   return (
     <div
       className="px-3 py-2 text-sm truncate"
@@ -11,6 +11,7 @@ function Side({ name, won, placeholder }: { name?: string; won?: boolean; placeh
       }}
     >
       {name ?? placeholder ?? '—'}
+      {won && score && <span className="font-normal"> ({score})</span>}
     </div>
   )
 }
@@ -18,9 +19,9 @@ function Side({ name, won, placeholder }: { name?: string; won?: boolean; placeh
 function Box({ box }: { box: BracketBox }) {
   const inner = (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)' }}>
-      <Side name={box.a?.name} won={box.a?.won} placeholder={box.aPlaceholder} />
+      <Side name={box.a?.name} won={box.a?.won} score={box.a?.score} placeholder={box.aPlaceholder} />
       <div style={{ borderTop: '1px solid var(--border-color)' }} />
-      <Side name={box.b?.name} won={box.b?.won} placeholder={box.bPlaceholder} />
+      <Side name={box.b?.name} won={box.b?.won} score={box.b?.score} placeholder={box.bPlaceholder} />
     </div>
   )
   return box.matchId ? <Link href={`/matches/${box.matchId}`} className="block">{inner}</Link> : inner

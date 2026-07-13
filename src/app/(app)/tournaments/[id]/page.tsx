@@ -134,6 +134,7 @@ export default async function TournamentDetailPage({ params }: Props) {
           bracket_pos: (m.bracket_pos as number) ?? 0,
           winner_id: (m.winner_id as string | null) ?? null,
           status: m.status as string,
+          result_summary: (m.result_summary as string | null) ?? null,
           player_a_id: m.player_a_id as string,
           player_b_id: m.player_b_id as string,
         })) as (BracketMatchRow & { id: string; player_a_id: string; player_b_id: string })[],
