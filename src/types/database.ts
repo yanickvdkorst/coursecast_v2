@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      match_viewers: {
+        Row: {
+          last_seen: string
+          match_id: string
+          viewer_key: string
+        }
+        Insert: {
+          last_seen?: string
+          match_id: string
+          viewer_key: string
+        }
+        Update: {
+          last_seen?: string
+          match_id?: string
+          viewer_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_viewers_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -533,6 +559,10 @@ export type Database = {
       get_shared_match: { Args: { p_token: string }; Returns: Json }
       get_public_tournament: { Args: { p_tournament_id: string }; Returns: Json }
       get_public_tournament_match: { Args: { p_match_id: string }; Returns: Json }
+      track_match_viewer: {
+        Args: { p_viewer_key: string | null; p_token?: string | null; p_match_id?: string | null }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

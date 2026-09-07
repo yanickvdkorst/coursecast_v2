@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { computeMatchStatus, getHoleResult } from '@/lib/matchplay/scoring'
+import { ViewerCount } from '@/components/ui/ViewerCount'
 import type { HoleResult } from '@/types/match'
 
 interface SharedMatch {
@@ -22,10 +23,28 @@ interface SharedMatch {
   hole_results: { hole_number: number; result: string }[]
 }
 
+const VIEWER_KEY_STORAGE = 'cc_viewer_key'
+
+// One key per browser tab, so a reload keeps counting as the same viewer.
+function getViewerKey(): string {
+  const fresh = () =>
+    typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+  try {
+    const stored = sessionStorage.getItem(VIEWER_KEY_STORAGE)
+    if (stored) return stored
+    const key = fresh()
+    sessionStorage.setItem(VIEWER_KEY_STORAGE, key)
+    return key
+  } catch {
+    return fresh()
+  }
+}
+
 export function WatchMatch({ token, matchId, backHref }: { token?: string; matchId?: string; backHref?: string }) {
   const supabase = getSupabaseBrowserClient()
   const [data, setData] = useState<SharedMatch | null>(null)
   const [state, setState] = useState<'loading' | 'ok' | 'notfound'>('loading')
+  const [viewers, setViewers] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -47,6 +66,26 @@ export function WatchMatch({ token, matchId, backHref }: { token?: string; match
     // Poll for live updates — golf scoring changes only every few minutes.
     const poll = setInterval(load, 4000)
     return () => { alive = false; clearInterval(poll) }
+  }, [token, matchId, supabase])
+
+  // Presence: heartbeat elke 5s, de RPC geeft het aantal actieve kijkers terug.
+  // Wie zijn tab sluit valt vanzelf uit de telling zodra zijn heartbeat verloopt.
+  useEffect(() => {
+    if (!token && !matchId) return
+    let alive = true
+    const key = getViewerKey()
+    const beat = async () => {
+      const { data: count, error } = await supabase.rpc('track_match_viewer', {
+        p_viewer_key: key,
+        p_token: token ?? null,
+        p_match_id: matchId ?? null,
+      })
+      if (!alive || error) return
+      setViewers(typeof count === 'number' ? count : 0)
+    }
+    beat()
+    const heartbeat = setInterval(beat, 5000)
+    return () => { alive = false; clearInterval(heartbeat) }
   }, [token, matchId, supabase])
 
   if (state === 'loading') {
@@ -105,13 +144,14 @@ export function WatchMatch({ token, matchId, backHref }: { token?: string; match
               Terug naar overzicht
             </a>
           )}
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-3 mb-2">
             {isLive && (
               <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--status-success)' }}>
                 <span className="inline-block w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--status-success)' }} />
                 Live
               </span>
             )}
+            {viewers > 0 && <ViewerCount count={viewers} />}
           </div>
           <div className="flex items-center justify-center gap-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
             <span style={{ color: 'var(--player-a-text)' }}>{nameA}</span>

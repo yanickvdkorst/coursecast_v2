@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { BackButton } from '@/components/ui/BackButton'
+import { ViewerCount } from '@/components/ui/ViewerCount'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { computeMatchStatus, getHoleResult } from '@/lib/matchplay/scoring'
 import { cn } from '@/lib/utils'
@@ -78,6 +79,32 @@ export function MatchScorecard({
     await supabase.rpc('disable_match_sharing', { p_match_id: match.id })
     setShareToken(null); setShareUrl(''); setShareOpen(false); setShareBusy(false)
   }
+
+  // Live spectator count. Players only read it — passing a null viewer key
+  // means "count, don't register", so scoring never inflates the number.
+  const [viewers, setViewers] = useState(0)
+  const isTournamentMatch = Boolean(match.tournament_id)
+  const matchIsLive = match.status === 'active' || match.status === 'pending'
+
+  useEffect(() => {
+    if (!isParticipant || !matchIsLive || (!shareToken && !isTournamentMatch)) {
+      setViewers(0)
+      return
+    }
+    let alive = true
+    const check = async () => {
+      const { data, error } = await supabase.rpc('track_match_viewer', {
+        p_viewer_key: null,
+        p_token: shareToken,
+        p_match_id: isTournamentMatch ? match.id : null,
+      })
+      if (!alive || error) return
+      setViewers(typeof data === 'number' ? data : 0)
+    }
+    check()
+    const poll = setInterval(check, 10000)
+    return () => { alive = false; clearInterval(poll) }
+  }, [isParticipant, matchIsLive, shareToken, isTournamentMatch, match.id, supabase])
 
   const matchStatus = computeMatchStatus(holeResults, match.player_a_id, match.player_b_id, totalHoles)
 
@@ -204,6 +231,15 @@ export function MatchScorecard({
           {/* Right actions: share (participants) + delete (non-guests) */}
           <div className="flex-1 flex justify-end">
           <div className="flex items-center gap-2 -mr-2">
+            {viewers > 0 && (
+              <button
+                onClick={openShare}
+                aria-label={`${viewers} ${viewers === 1 ? 'kijker' : 'kijkers'} live`}
+                className="rounded-full"
+              >
+                <ViewerCount count={viewers} />
+              </button>
+            )}
             {isParticipant && (
               <button
                 onClick={openShare}
